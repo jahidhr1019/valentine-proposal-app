@@ -38,6 +38,7 @@ type LivingButtonProps = {
 
 type HeartSVGProps = {
   className?: string;
+  style?: React.CSSProperties;
 };
 
 type FloatingHeartsProps = {
@@ -188,54 +189,70 @@ const LoveOdyssey = ({ userImages, customMessage, partnerName, yourName }: LoveO
   }, [displayImages.length]);
 
   return (
-    <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden z-[100] p-4">
-      <div className="absolute inset-0 transition-all duration-1000 scale-110 blur-3xl opacity-20">
-        <img src={displayImages[currentIndex]} className="w-full h-full object-cover" alt="" />
+    <div className="fixed inset-0 bg-gradient-to-br from-[#110d19] to-[#030712] flex flex-col items-center justify-center overflow-hidden z-[100] p-4">
+      <style>{`
+        @keyframes ken-burns {
+          0%, 100% { transform: scale(1.1) translate(0, 0); filter: brightness(1); }
+          50% { transform: scale(1.2) translate(3%, -3%); filter: brightness(1.1); }
+        }
+        .animate-ken-burns { animation: ken-burns 20s ease-in-out infinite; }
+      `}</style>
+      
+      <div className="absolute inset-0 transition-all duration-[2000ms] scale-125 blur-xl opacity-20">
+        <img
+          key={currentIndex}
+          src={displayImages[currentIndex]}
+          className="w-full h-full object-cover animate-ken-burns"
+          alt="Romantic backdrop"
+        />
       </div>
       
-      <div className="relative w-full max-w-lg z-10 flex flex-col items-center">
-        <div className="relative group bg-white p-3 md:p-4 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] animate-in zoom-in-90 duration-700">
-          <div className="relative overflow-hidden aspect-[4/5] w-64 md:w-80 bg-slate-100">
+      <FloatingHearts count={30} />
+      
+      <div className="relative w-full max-w-lg z-10 flex flex-col items-center animate-in fade-in duration-1000 delay-300">
+        <div 
+          key={currentIndex}
+          className="relative bg-white p-4 pb-20 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.6)] rotate-[-3deg] hover:rotate-0 hover:scale-105 transition-transform duration-700 ease-out animate-in zoom-in-75 slide-in-from-bottom-10 duration-1000"
+        >
+          <div className="relative overflow-hidden aspect-square w-64 md:w-80 bg-slate-200">
             <img 
-              key={currentIndex}
               src={displayImages[currentIndex]} 
-              className="w-full h-full object-cover animate-in fade-in zoom-in-105 duration-1000"
+              className="w-full h-full object-cover"
               alt="Memory"
             />
+             <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent" />
+             <div className="absolute inset-0 ring-1 ring-black/10 ring-inset" />
           </div>
-          <div className="pt-4 pb-1 text-center">
-             <p className="font-serif text-xl md:text-2xl text-slate-800 italic">
-               {partnerName} & {yourName}
-             </p>
-             <p className="text-slate-400 text-[8px] font-mono tracking-widest uppercase mt-1">Our Forever Story</p>
-          </div>
+          <p className="absolute bottom-6 left-6 font-serif text-xl md:text-2xl text-slate-700 italic">
+            {partnerName} & {yourName}
+          </p>
         </div>
 
         {showMessage && (
-          <div className="mt-8 p-6 md:p-8 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl animate-in fade-in slide-in-from-bottom-10 duration-1000 shadow-2xl text-center">
-            <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500 mb-4 tracking-tight">
+          <div className="mt-12 p-8 bg-black/25 backdrop-blur-lg border border-white/5 rounded-[2rem] animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500 shadow-2xl text-center max-w-md">
+            <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-300 to-pink-400 mb-5 tracking-tight">
               She Said Yes!
             </h2>
-            <p className="text-rose-100/80 text-base md:text-lg font-light italic leading-relaxed max-w-sm mx-auto">
+            <p className="text-rose-100/90 text-lg font-light italic leading-relaxed">
               "{customMessage}"
             </p>
-            <div className="mt-6 flex justify-center gap-4">
-               <HeartSVG className="w-8 h-8 text-rose-500 animate-bounce" />
-               <HeartSVG className="w-8 h-8 text-rose-500 animate-bounce delay-150" />
+            <div className="mt-8 flex justify-center gap-4">
+               <HeartSVG className="w-9 h-9 text-rose-400 animate-bounce" />
+               <HeartSVG className="w-9 h-9 text-rose-400 animate-bounce" style={{animationDelay: '150ms'}} />
             </div>
           </div>
         )}
       </div>
 
-      <button onClick={() => window.location.reload()} className="absolute bottom-6 text-rose-400 text-[9px] font-black tracking-[0.4em] uppercase opacity-40 hover:opacity-100 transition-opacity z-[110]">
+      <button onClick={() => window.location.reload()} className="absolute bottom-8 text-rose-300/40 text-[9px] font-black tracking-[0.3em] uppercase hover:text-rose-300/80 transition-opacity z-[110]">
         Restart
       </button>
     </div>
   );
 };
 
-const HeartSVG = ({ className }: HeartSVGProps) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+const HeartSVG = ({ className, style }: HeartSVGProps) => (
+  <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
   </svg>
 );
@@ -324,7 +341,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
               ))}
               <label className="w-12 h-12 rounded-lg border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/5 transition-colors">
                 <span className="text-white/40 text-xl font-light">+</span>
-                <input type="file" multiple className="hidden" onChange={handleImage} />
+                <input type="file" multiple className="hidden" onChange={handleImage} accept="image/*" />
               </label>
             </div>
           </div>
