@@ -9,15 +9,20 @@ import React, { useState, useEffect, useRef, useMemo, ChangeEvent, MouseEvent } 
  * - Aspect-ratio locked, non-distorting image frames.
  */
 
+type ImageWithCaption = {
+  src: string;
+  caption: string;
+};
+
 type SetupData = {
   yourName: string;
   partnerName: string;
   message: string;
-  images: string[];
+  images: ImageWithCaption[];
 };
 
 type LoveOdysseyProps = {
-  userImages: string[];
+  userImages: ImageWithCaption[];
   customMessage: string;
   partnerName: string;
   yourName: string;
@@ -200,9 +205,9 @@ const LoveOdyssey = ({
   
   const displayImages = useMemo(() => {
     return userImages.length > 0 ? userImages : [
-      "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200",
-      "https://images.unsplash.com/photo-1516589174184-c685266e4871?q=80&w=1200",
-      "https://images.unsplash.com/photo-1494774157365-9e04c6720e47?q=80&w=1200"
+      { src: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200", caption: "" },
+      { src: "https://images.unsplash.com/photo-1516589174184-c685266e4871?q=80&w=1200", caption: "" },
+      { src: "https://images.unsplash.com/photo-1494774157365-9e04c6720e47?q=80&w=1200", caption: "" }
     ];
   }, [userImages]);
 
@@ -247,7 +252,7 @@ const LoveOdyssey = ({
     <div className="fixed inset-0 bg-[#020617] flex items-center justify-center overflow-hidden z-[100] p-4 font-sans">
       {/* Dynamic Background Blur */}
       <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
-        <img src={displayImages[currentIndex]} className="w-full h-full object-cover" alt="" />
+        <img src={displayImages[currentIndex].src} className="w-full h-full object-cover" alt="" />
       </div>
       
       <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center h-full">
@@ -257,7 +262,7 @@ const LoveOdyssey = ({
             <div className={`relative overflow-hidden aspect-[3/4] w-64 md:w-80 ${frameStyles.inner}`}>
               <img 
                 key={currentIndex}
-                src={displayImages[currentIndex]} 
+                src={displayImages[currentIndex].src} 
                 className="w-full h-full object-cover animate-in fade-in zoom-in-105 duration-1000"
                 alt="Memory"
               />
@@ -354,64 +359,173 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
 };
 
 const SetupPage = ({ onStart }: SetupPageProps) => {
-  const [formData, setFormData] = useState<SetupData>({
-    yourName: '',
-    partnerName: '',
-    message: "I promise to love you more with every passing heartbeat.",
+  const [formData, setFormData] = useState<SetupData>({ 
+    yourName: '', 
+    partnerName: '', 
+    message: '', 
     images: []
   });
-  const handleImage = (e: ChangeEvent<HTMLInputElement>) => {
+
+  const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (ev) => {
         if(ev.target?.result) {
-          setFormData(prev => ({ ...prev, images: [...prev.images, ev.target.result as string] }));
+            setFormData(prev => ({ 
+              ...prev, 
+              images: [...prev.images, { src: ev.target.result as string, caption: "" }] 
+            }));
         }
       };
       reader.readAsDataURL(file);
     });
   };
+
+  const removeImage = (idx: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const updateCaption = (idx: number, text: string) => {
+    const newImages = [...formData.images];
+    newImages[idx].caption = text;
+    setFormData({ ...formData, images: newImages });
+  };
+
+  const isFormValid = formData.yourName && formData.partnerName;
+
   return (
-    <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 relative overflow-y-auto">
-      <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 md:p-10 backdrop-blur-2xl shadow-2xl my-8">
-        <h2 className="text-3xl font-black text-white mb-8 tracking-tight flex items-center gap-3">
-          Preparation <HeartSVG className="w-6 h-6 text-rose-600" />
-        </h2>
-        <div className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-[10px] text-rose-400 font-bold uppercase tracking-widest px-2">Your Name</label>
-            <input type="text" placeholder="Romeo" className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-white/10" value={formData.yourName} onChange={e => setFormData({...formData, yourName: e.target.value})} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] text-rose-400 font-bold uppercase tracking-widest px-2">Partner's Name</label>
-            <input type="text" placeholder="Juliet" className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-white/10" value={formData.partnerName} onChange={e => setFormData({...formData, partnerName: e.target.value})} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] text-rose-400 font-bold uppercase tracking-widest px-2">Your Message</label>
-            <textarea className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white h-24 resize-none outline-none focus:ring-2 focus:ring-rose-500/50 transition-all" value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] text-rose-400 font-bold uppercase tracking-widest px-2">Upload Memories</label>
-            <div className="flex flex-wrap gap-2 py-2">
-              {formData.images.map((img, i) => (
-                <div key={i} className="w-12 h-12 rounded-lg border border-rose-500/50 overflow-hidden bg-slate-900">
-                    <img src={img} className="w-full h-full object-cover" alt="" />
-                </div>
-              ))}
-              <label className="w-12 h-12 rounded-lg border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/5 transition-colors">
-                <span className="text-white/40 text-xl font-light">+</span>
-                <input type="file" multiple className="hidden" onChange={handleImage} accept="image/*" />
-              </label>
-            </div>
-          </div>
-          <button disabled={!formData.yourName || !formData.partnerName} onClick={() => onStart(formData)} className="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-5 rounded-2xl shadow-xl transition-all disabled:opacity-20 active:scale-95 mt-4">LAUNCH PROPOSAL</button>
-        </div>
+    <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden">
+      {/* Dynamic Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[120px] animate-pulse delay-700" />
       </div>
+
+      <div className="relative w-full max-w-xl z-10">
+        <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl overflow-hidden group">
+          
+          {/* Header */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30 group-hover:scale-110 transition-transform duration-500">
+              <HeartSVG className="w-8 h-8 text-rose-500 animate-pulse" />
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tight mb-2">Digital Odyssey</h1>
+            <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">Customize your proposal</p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Names Input */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Your Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Romeo" 
+                  className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
+                  value={formData.yourName} 
+                  onChange={e => setFormData({...formData, yourName: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Their Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Juliet" 
+                  className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
+                  value={formData.partnerName} 
+                  onChange={e => setFormData({...formData, partnerName: e.target.value})} 
+                />
+              </div>
+            </div>
+
+            {/* Custom Message */}
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">The Final Note (Optional)</label>
+              <textarea 
+                className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white h-24 resize-none outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
+                placeholder="Write a message for when they click 'YES'..." 
+                value={formData.message} 
+                onChange={e => setFormData({...formData, message: e.target.value})} 
+              />
+            </div>
+
+            {/* Photo Memories */}
+            <div className="space-y-3">
+              <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Memories & Captions ({formData.images.length})</label>
+              
+              <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                {formData.images.map((img, i) => (
+                  <div key={i} className="group/item relative flex gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 animate-in slide-in-from-right-2 duration-300">
+                    <div className="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-white/10">
+                      <img src={img.src} className="w-full h-full object-cover" alt="" />
+                      <button 
+                        onClick={() => removeImage(i)}
+                        className="absolute inset-0 bg-rose-600/80 text-white opacity-0 group-hover/item:opacity-100 flex items-center justify-center transition-opacity"
+                      >
+                        <span className="text-xs font-bold uppercase tracking-tighter">Del</span>
+                      </button>
+                    </div>
+                    <div className="flex-1 flex flex-col justify-center">
+                      <input 
+                        type="text" 
+                        className="bg-transparent text-white text-xs outline-none border-b border-white/10 focus:border-rose-500/50 py-1 transition-all"
+                        value={img.caption}
+                        onChange={(e) => updateCaption(i, e.target.value)}
+                        placeholder="Add a caption..."
+                      />
+                      <span className="text-[8px] text-white/20 uppercase mt-2 tracking-widest">Memory {i + 1}</span>
+                    </div>
+                  </div>
+                ))}
+
+                <label className="w-full h-20 rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer text-white/20 hover:text-white/40 hover:bg-white/5 hover:border-white/20 transition-all duration-300">
+                  <span className="text-xl mb-1">+</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.3em]">Upload Photos</span>
+                  <input type="file" multiple className="hidden" onChange={handleImage} accept="image/*" />
+                </label>
+              </div>
+            </div>
+
+            {/* Launch Button */}
+            <button 
+              disabled={!isFormValid}
+              onClick={() => onStart(formData)}
+              className={`w-full group/btn relative overflow-hidden py-6 rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500
+                ${isFormValid 
+                  ? 'bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95' 
+                  : 'bg-white/5 text-white/20 cursor-not-allowed'
+                }`}
+            >
+              <div className="relative z-10 flex items-center justify-center gap-3">
+                {isFormValid ? "Begin Love Odyssey" : "Complete Names to Start"}
+                {isFormValid && <HeartSVG className="w-4 h-4 group-hover/btn:scale-125 transition-transform" />}
+              </div>
+              {isFormValid && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
+              )}
+            </button>
+          </div>
+        </div>
+        
+        <p className="text-center mt-8 text-white/10 text-[9px] font-bold tracking-[0.5em] uppercase pointer-events-none">
+          Secure & Private Experience
+        </p>
+      </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+      `}</style>
     </div>
   );
 };
+
 
 const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount = 0 }: LivingButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
