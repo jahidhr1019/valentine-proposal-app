@@ -21,7 +21,6 @@ type SetupData = {
 
 type LoveOdysseyProps = {
   userImages: ImageWithCaption[];
-  customMessage: string;
   partnerName: string;
   yourName: string;
 };
@@ -288,7 +287,6 @@ export default function Home() {
     return (
       <LoveOdyssey 
         userImages={setupData.images} 
-        customMessage={setupData.message || "Will you be my Valentine?"}
         partnerName={setupData.partnerName}
         yourName={setupData.yourName}
       />
@@ -531,13 +529,21 @@ const ParticleExplosion = ({ particle, accent }: { particle: string; accent: str
 
 const LoveOdyssey = ({ 
   userImages, 
-  customMessage, 
   partnerName, 
   yourName 
 }: LoveOdysseyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMessage, setShowMessage] = useState(false);
   
+  const defaultCaptions = useMemo(() => [
+    "Every moment with you is a treasure.",
+    "A memory I'll cherish forever.",
+    "Just another reason why I love you.",
+    "You make my world complete.",
+    "The beginning of our forever.",
+    "My favorite place is right next to you."
+  ], []);
+
   const displayImages = useMemo(() => {
     return userImages.length > 0 ? userImages : [
       { src: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200", caption: "" },
@@ -578,6 +584,8 @@ const LoveOdyssey = ({
   };
 
   const frameStyles = getFrameStyles(currentIndex);
+  const currentImage = displayImages[currentIndex];
+  const caption = currentImage.caption || defaultCaptions[currentIndex % defaultCaptions.length];
 
   return (
     <div className="fixed inset-0 bg-[#020617] flex items-center justify-center overflow-hidden z-[100] p-4 font-sans">
@@ -615,14 +623,8 @@ const LoveOdyssey = ({
 
         {showMessage && (
           <div className="absolute top-[85%] md:top-[80%] p-6 md:p-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg">
-              Endless Love
-            </div>
-            <h2 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500 mb-2 tracking-tighter">
-              Always & Forever
-            </h2>
             <p className="text-rose-100/70 text-sm md:text-base font-light leading-relaxed px-2">
-              "{customMessage}"
+              "{caption}"
             </p>
             <div className="mt-4 flex justify-center">
                <HeartSVG className="w-8 h-8 text-rose-500 animate-heartbeat" />
@@ -630,10 +632,6 @@ const LoveOdyssey = ({
           </div>
         )}
       </div>
-
-      <button onClick={() => window.location.reload()} className="absolute bottom-6 text-white/20 hover:text-rose-400 text-[10px] font-bold tracking-[0.5em] uppercase transition-all z-[110] border-b border-white/10 pb-1">
-        Begin New Chapter
-      </button>
 
       <style>{`
         @keyframes heartbeat {
@@ -1167,3 +1165,4 @@ const LivingButton = ({
     </button>
   );
 };
+
