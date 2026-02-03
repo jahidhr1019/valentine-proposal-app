@@ -634,42 +634,40 @@ const LivingButton = ({
   const [dynamicOffset, setDynamicOffset] = useState({ x: 0, y: 0 });
   const [mode, setMode] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [isShy, setIsShy] = useState(false);
 
   const isYes = type === 'yes';
 
+  // Determine eye expression based on current behavior
   const getMood = () => {
     if (isFinalState) return 'partying';
-    if (isYes) {
-      if (isShy) return 'blushing';
-      return 'beaming';
-    }
+    if (isYes) return 'beaming';
     if (isPaused) return 'exhausted';
-    if (rejectionCount > 3) return 'pensive';
     if (mode === 'glitch') return 'grimacing';
     if (mode === 'tornado') return 'astonished';
+    if (rejectionCount > 3) return 'pensive';
     return 'neutral';
   };
 
-  useEffect(() => {
-    if (isYes) return;
-    if (rejectionCount > 3) {
-      if (!isPaused) {
-        setIsPaused(true);
-        const timer = setTimeout(() => {
-          setIsPaused(false);
-          if (buttonRef.current && !buttonRef.current.matches(':hover')) {
-             triggerEvasion(true);
-          }
-        }, 2000);
-        return () => clearTimeout(timer);
-      }
-      return;
-    }
-  }, [isYes, rejectionCount, isPaused]);
+  const triggerEvasion = () => {
+    if (isYes || isPaused || isFinalState) return;
+    
+    // Choose one of your custom behaviors
+    const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
+    const tactic = tactics[Math.floor(Math.random() * tactics.length)];
+    setMode(tactic);
+
+    // Leap to a new random position on screen
+    const padding = 120;
+    const nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
+    const ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
+    setPosition({ x: nx, y: ny });
+
+    // Reset the visual effect after 1 second
+    setTimeout(() => setMode(null), 1000);
+  };
 
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
+    const handleMove = (e: any) => {
       if (!buttonRef.current || isFinalState) return;
 
       const rect = buttonRef.current.getBoundingClientRect();
@@ -680,75 +678,42 @@ const LivingButton = ({
       const dist = Math.hypot(dx, dy);
       const angle = Math.atan2(dy, dx);
 
+      // Make eyes track the mouse cursor
       setPupilPos({ x: Math.cos(angle) * 6, y: Math.sin(angle) * 6 });
 
-      if (!isYes && !isPaused && rejectionCount <= 3 && dist < 100) {
-        triggerEvasion();
-      }
-
+      // Live physics behaviors
       if (isYes) {
+        // "Social Butterfly": Slides away gently if the mouse gets too close
         if (dist < 150) {
-          setIsShy(true);
-          const push = (150 - dist) * 0.4;
+          const push = (150 - dist) * 0.15;
           setDynamicOffset({ x: -Math.cos(angle) * push, y: -Math.sin(angle) * push });
         } else {
-          setIsShy(false);
           setDynamicOffset({ x: 0, y: 0 });
         }
       } else {
-        if (isPaused) {
-            setDynamicOffset({ x: 0, y: 0 });
-            return;
-        }
-        if (mode === 'newton' && dist < 200) {
-          const force = (200 - dist) * 0.5;
+        // "Newton" Repulsion force field
+        if (mode === 'newton' && dist < 250) {
+          const force = (250 - dist) * 0.4;
           setDynamicOffset({ x: -Math.cos(angle) * force, y: -Math.sin(angle) * force });
         }
-        else if (mode === 'blackhole' && dist < 250) {
-          const force = (250 - dist) * 0.3;
+        // "Black Hole" Attraction (that slips away)
+        if (mode === 'blackhole' && dist < 300) {
+          const force = (300 - dist) * 0.3;
           setDynamicOffset({ x: Math.cos(angle) * force, y: Math.sin(angle) * force });
-          if (dist < 40) triggerEvasion();
-        }
-        else {
-          setDynamicOffset({ x: 0, y: 0 });
+          if (dist < 45) triggerEvasion(); 
         }
       }
     };
 
-    window.addEventListener('mousemove', handleMove as any);
-    return () => window.removeEventListener('mousemove', handleMove as any);
-  }, [mode, isYes, isFinalState, isPaused, rejectionCount, isShy]);
-
-
-  const triggerEvasion = (force = false) => {
-    if (isYes || (isPaused && !force)) return;
-    
-    const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
-    const tactic = tactics[Math.floor(Math.random() * tactics.length)];
-    setMode(tactic);
-
-    const padding = 100;
-    const nx = (Math.random() - 0.5) * (window.innerWidth - padding);
-    const ny = (Math.random() - 0.5) * (window.innerHeight - padding);
-    setPosition({ x: nx, y: ny });
-
-    setTimeout(() => {
-        setDynamicOffset({x: 0, y: 0});
-        setMode(null)
-    }, 1500);
-  };
-  
-  const handleMouseEnter = () => {
-    if (!isYes && !isPaused && rejectionCount <= 3) {
-      triggerEvasion();
-    }
-  }
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, [mode, isYes, isFinalState]);
 
   return (
     <button
       ref={buttonRef}
       onClick={isYes ? onClick : onCaught}
-      onMouseEnter={handleMouseEnter}
+      onMouseEnter={!isYes ? triggerEvasion : undefined}
       style={{
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
                     calc(-50% + ${position.y + dynamicOffset.y}px)) 
@@ -756,20 +721,20 @@ const LivingButton = ({
       }}
       className={cn(
         "absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl z-50",
-        isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-200 border-slate-400 text-slate-800",
-        mode === 'tornado' && "animate-[spin_0.5s_linear_infinite]",
-        mode === 'ghost' && "opacity-20 blur-sm scale-150",
-        mode === 'tiny' && "scale-50 opacity-50",
-        mode === 'wind' && "skew-x-[30deg] blur-md translate-x-[500px] opacity-0",
-        mode === 'glitch' && "animate-pulse skew-y-12 contrast-200"
+        isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-100 border-slate-300 text-slate-800",
+        // Map modes to Tailwind animations/transforms
+        mode === 'tornado' && "animate-spin",
+        mode === 'ghost' && "opacity-20 blur-sm scale-125",
+        mode === 'tiny' && "scale-0 opacity-0",
+        mode === 'wind' && "skew-x-[45deg] blur-lg translate-x-[800px] opacity-0",
+        mode === 'glitch' && "animate-pulse skew-y-12 contrast-200 brightness-150"
       )}
     >
       <div className="flex gap-1">
         <Eye pos={pupilPos} mood={getMood()} />
         <Eye pos={pupilPos} mood={getMood()} />
       </div>
-      <span className="text-2xl font-black italic">{label}</span>
+      <span className="text-2xl font-black italic uppercase tracking-tighter">{label}</span>
     </button>
   );
 };
-```
