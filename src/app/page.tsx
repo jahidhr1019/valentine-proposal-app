@@ -64,6 +64,7 @@ export default function Home() {
   const [isStarted, setIsStarted] = useState(false);
   const [isFinalState, setIsFinalState] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [rejectionCount, setRejectionCount] = useState(0);
   const [themeIndex, setThemeIndex] = useState(0);
   const [yesButtonScale, setYesButtonScale] = useState(1);
@@ -75,7 +76,8 @@ export default function Home() {
   };
 
   const handleNoClicked = () => {
-    setRejectionCount(prev => prev + 1);
+    const newRejectionCount = rejectionCount + 1;
+    setRejectionCount(newRejectionCount);
     setThemeIndex(prev => (prev + 1) % themes.length);
     setYesButtonScale(prev => prev + 0.4);
     setNoButtonScale(prev => Math.max(prev - 0.1, 0.5));
@@ -84,9 +86,14 @@ export default function Home() {
   const handleYesClicked = (e?: MouseEvent) => {
     if (e) e.stopPropagation();
     setIsFinalState(true);
+
     setTimeout(() => {
-      setShowSuccess(true);
+        setShowCelebration(true);
     }, 800);
+
+    setTimeout(() => {
+        setShowSuccess(true);
+    }, 800 + 3000);
   };
   
   if (!isStarted) {
@@ -102,6 +109,10 @@ export default function Home() {
         yourName={setupData.yourName}
       />
     );
+  }
+
+  if(showCelebration) {
+    return <CelebrationScreen />;
   }
 
   const mainMessages = [
@@ -189,6 +200,84 @@ const HeartSVG = ({ className }: HeartSVGProps) => (
     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
   </svg>
 );
+
+const CelebrationScreen = () => {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <div className="fixed inset-0 bg-[#030712]" />;
+    }
+
+    return (
+        <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden">
+            <ConfettiExplosion />
+            <div className="relative z-10 text-center animate-in fade-in-0 zoom-in-90 duration-1000">
+                <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-rose-600 to-pink-500 bg-[length:200%_auto] animate-gradient-x mb-4">
+                    YES!
+                </h1>
+                <p className="text-rose-200/60 font-bold tracking-[0.3em] uppercase text-sm animate-in fade-in delay-300 duration-1000 fill-mode-both">
+                    You made the right choice, I will always be there for you!
+                </p>
+            </div>
+             <style>{`
+                @keyframes gradient-x {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+                }
+                .animate-gradient-x { animation: gradient-x 4s ease infinite; }
+            `}</style>
+        </div>
+    );
+};
+
+const ConfettiExplosion = () => {
+    const [confetti, setConfetti] = useState<any[]>([]);
+
+    useEffect(() => {
+        const generatedConfetti = Array.from({ length: 150 }).map((_, i) => ({
+            id: i,
+            x: (Math.random() - 0.5) * 2000,
+            y: (Math.random() - 0.5) * 2000,
+            size: Math.random() * 25 + 10,
+            rotation: Math.random() * 1080 - 540,
+            delay: Math.random() * 0.5,
+            duration: Math.random() * 2 + 1,
+            color: ['#be123c', '#fecdd3', '#fda4af', '#fb7185', '#fff1f2'][Math.floor(Math.random() * 5)]
+        }));
+        setConfetti(generatedConfetti);
+    }, []);
+
+    return (
+        <div className="absolute inset-0 w-full h-full pointer-events-none">
+            {confetti.map(c => (
+                <div
+                    key={c.id}
+                    className="absolute top-1/2 left-1/2"
+                    style={{
+                        '--x-end': `${c.x}px`,
+                        '--y-end': `${c.y}px`,
+                        '--rotate-end': `${c.rotation}deg`,
+                        width: `${c.size}px`,
+                        color: c.color,
+                        animation: `explode ${c.duration}s ease-out ${c.delay}s forwards`,
+                    }}
+                >
+                    <HeartSVG className="w-full h-full" />
+                </div>
+            ))}
+            <style>{`
+                @keyframes explode {
+                    0% { transform: translate(0, 0) scale(0) rotate(0deg); opacity: 1; }
+                    100% { transform: translate(var(--x-end), var(--y-end)) scale(1) rotate(var(--rotate-end)); opacity: 0; }
+                }
+            `}</style>
+        </div>
+    );
+};
 
 const LoveOdyssey = ({ 
   userImages, 
@@ -655,29 +744,30 @@ const LivingButton = ({
   };
 
   const getMood = () => {
-    if (isFinalState) return 'partying';
+    if (isFinalState) return isYes ? 'partying' : 'broken';
     if (isYes) {
         return (dynamicOffset.x !== 0 || dynamicOffset.y !== 0) ? 'blushing' : 'beaming';
     }
     if (isPaused) return 'exhausted';
     if (mode === 'glitch') return 'grimacing';
     if (mode === 'tornado') return 'astonished';
-    if (rejectionCount > 3) return 'pensive';
+    if (rejectionCount && rejectionCount > 3) return 'pensive';
     return 'neutral';
   };
 
   const triggerEvasion = useCallback(() => {
     if (isYes || isPaused || isFinalState || mode) return;
-    
-    const newEvasionCount = evasionCount + 1;
-    setEvasionCount(newEvasionCount);
 
-    if (newEvasionCount % 5 === 0) {
+    if (rejectionCount && rejectionCount % 5 === 0) {
         setIsPaused(true);
         setTimeout(() => {
             setIsPaused(false);
+            setEvasionCount(0); // Reset count after pause
         }, 1000);
+        return; 
     }
+    
+    setEvasionCount(prev => prev + 1);
 
     const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
     const tactic = tactics[Math.floor(Math.random() * tactics.length)];
@@ -718,11 +808,12 @@ const LivingButton = ({
             return;
         }
     }
-
+    
+    // Fallback if no safe spot is found
     console.warn("Could not find a non-overlapping position for 'No' button.");
     setTimeout(() => setMode(null), 1000);
 
-  }, [isYes, isPaused, isFinalState, evasionCount, mode, noButtonScale]);
+  }, [isYes, isPaused, isFinalState, evasionCount, mode, noButtonScale, rejectionCount]);
 
   useEffect(() => {
     const handleMove = (e: any) => {
@@ -746,6 +837,10 @@ const LivingButton = ({
           setDynamicOffset({ x: 0, y: 0 });
         }
       } else {
+        if (dist < 100 && !isPaused && !mode) {
+           triggerEvasion();
+        }
+
         if (mode === 'newton' && dist < 250) {
           const force = (250 - dist) * 0.4 / (noButtonScale || 1);
           setDynamicOffset({ x: -Math.cos(angle) * force, y: -Math.sin(angle) * force });
@@ -762,18 +857,19 @@ const LivingButton = ({
 
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [mode, isYes, isFinalState, noButtonScale, triggerEvasion]);
+  }, [mode, isYes, isFinalState, noButtonScale, triggerEvasion, isPaused]);
 
   const handleNoClick = () => {
-    onCaught?.();
+    if(onCaught) onCaught();
+    triggerEvasion();
   };
 
   return (
     <button
       id={id}
       ref={buttonRef}
-      onClick={isYes ? onClick : handleNoClick}
-      onMouseEnter={!isYes ? triggerEvasion : undefined}
+      onClick={isYes ? onClick : (isPaused ? onCaught : undefined)}
+      onMouseEnter={!isYes && !isPaused ? triggerEvasion : undefined}
       style={{
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
                     calc(-50% + ${position.y + dynamicOffset.y}px)) 
@@ -782,6 +878,7 @@ const LivingButton = ({
       className={cn(
         "absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl z-50",
         isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-100 border-slate-300 text-slate-800",
+        isPaused && "cursor-pointer animate-pulse",
         mode === 'tornado' && "animate-spin",
         mode === 'ghost' && "opacity-20 blur-sm scale-125",
         mode === 'tiny' && "scale-0 opacity-0",
