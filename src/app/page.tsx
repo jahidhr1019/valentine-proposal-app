@@ -627,10 +627,6 @@ const LoveOdyssey = ({
       <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
         <img src={displayImages[currentIndex].src} className="w-full h-full object-cover" alt="" />
       </div>
-
-      <div className="absolute top-16 md:top-24 text-center z-20 animate-in fade-in slide-in-from-top-8 duration-1000">
-        <h1 className="text-5xl md:text-6xl font-headline text-white drop-shadow-lg">Always & Forever</h1>
-      </div>
       
       <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center gap-6">
         <div className={`relative group rounded-2xl transition-all duration-1000 transform hover:scale-105 ${frameStyles.outer}`}>
