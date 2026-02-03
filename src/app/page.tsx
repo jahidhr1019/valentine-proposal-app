@@ -641,7 +641,7 @@ const LoveOdyssey = ({
                <div className="mt-2 flex items-center gap-2">
                  <div className="h-px w-8 bg-white/20" />
                  <span className="text-white/40 text-[9px] font-bold tracking-[0.3em] uppercase">
-                   Frame {currentIndex + 1}
+                   Always & Forever
                  </span>
                  <div className="h-px w-8 bg-white/20" />
                </div>
