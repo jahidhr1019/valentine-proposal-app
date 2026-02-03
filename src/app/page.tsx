@@ -333,7 +333,6 @@ export default function Home() {
     : currentThemeConfig.rejectionMessages[(rejectionCount - 1) % currentThemeConfig.rejectionMessages.length];
   
   const partner = setupData.partnerName || currentThemeConfig.partnerName;
-  const you = setupData.yourName || currentThemeConfig.yourName;
 
   return (
     <div className={cn("fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30", isHeartbroken && "animate-shake")}>
@@ -669,6 +668,7 @@ const LoveOdyssey = ({
 
   return (
     <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center overflow-hidden z-[100] p-4 font-sans">
+      <FloatingHearts count={250} />
       <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
         <img src={displayImages[currentIndex].src} className="w-full h-full object-cover" alt="" />
       </div>
