@@ -36,6 +36,7 @@ type LivingButtonProps = {
   isFinalState: boolean;
   rejectionCount?: number;
   yesButtonScale: number;
+  noButtonScale: number;
   setYesButtonScale: React.Dispatch<React.SetStateAction<number>>;
   setNoButtonScale: React.Dispatch<React.SetStateAction<number>>;
 };
@@ -157,6 +158,7 @@ export default function Home() {
             onClick={handleYesClicked}
             isFinalState={isFinalState} 
             yesButtonScale={yesButtonScale}
+            noButtonScale={noButtonScale}
             setYesButtonScale={setYesButtonScale}
             setNoButtonScale={setNoButtonScale}
           />
@@ -168,6 +170,7 @@ export default function Home() {
             isFinalState={isFinalState} 
             rejectionCount={rejectionCount}
             yesButtonScale={yesButtonScale}
+            noButtonScale={noButtonScale}
             setYesButtonScale={setYesButtonScale}
             setNoButtonScale={setNoButtonScale}
           />
@@ -632,19 +635,19 @@ const Eye = ({ pos, mood }: { pos: {x: number, y: number}, mood: string }) => {
 };
 
 
-const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount = 0, yesButtonScale, setYesButtonScale, setNoButtonScale }: LivingButtonProps) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
+const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount = 0 }) => {
+  const buttonRef = React.useRef(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dynamicOffset, setDynamicOffset] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [teleports, setTeleports] = useState(0);
   const [speech, setSpeech] = useState("");
-  const [mode, setMode] = useState<string | null>(null);
+  const [mode, setMode] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
-  const pauseTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pauseTimerRef = React.useRef(null);
   const [emotionCycle, setEmotionCycle] = useState(0);
-  const glitchIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const glitchIntervalRef = React.useRef(null);
 
   const isYes = type === 'yes';
   const maxAttempts = 4;
@@ -724,7 +727,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
   useEffect(() => {
     if (isFinalState || isPaused) return;
     
-    const handleMove = (e: globalThis.MouseEvent) => {
+    const handleMove = (e) => {
       if (!buttonRef.current) return;
       const r = buttonRef.current.getBoundingClientRect();
       const cx = r.left + r.width / 2;
@@ -785,8 +788,9 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
     if (rejectionCount > 1) return 'grimacing';
     return isHovered ? 'thinking' : 'neutral';
   };
-
-  const currentNoButtonScale = isYes ? 1 : (noButtonScale ?? 1);
+  
+  const yesButtonScale = 1; // Placeholder
+  const noButtonScale = 1; // Placeholder
 
   return (
     <div 
@@ -796,9 +800,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
         ${mode === 'wind' ? 'skew-x-12' : ''}
       `}
       style={{
-        transform: `
-          translate(calc(-50% + ${position.x + dynamicOffset.x}px), calc(-50% + ${position.y + dynamicOffset.y}px)) 
-          scale(${mode === 'tiny' ? 0.2 : (isYes ? yesButtonScale : currentNoButtonScale)})`,
+        transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), calc(-50% + ${position.y + dynamicOffset.y}px)) scale(${mode === 'tiny' ? 0.2 : (isYes ? yesButtonScale : noButtonScale)})`,
         marginLeft: isYes ? (position.x === 0 ? '-150px' : '0') : (position.x === 0 ? '150px' : '0'),
         opacity: mode === 'ghost' ? 0.2 : 1,
         cursor: (!isYes && rejectionCount < maxAttempts && !isPaused) ? 'none' : 'pointer',
@@ -814,26 +816,27 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
       <button
         ref={buttonRef}
         type="button"
-        onClick={isYes ? onClick : (rejectionCount >= maxAttempts ? onCaught : onCaught)}
+        onClick={isYes ? onClick : (rejectionCount >= maxAttempts ? onCaught : undefined)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => { setIsHovered(false); if (isYes) { setDynamicOffset({ x: 0, y: 0 }); } }}
-        className={cn(
-          'relative flex flex-col items-center justify-center transition-all duration-300 active:scale-95 group',
-          'w-48 h-36 rounded-[2.5rem]',
-          isYes
-          ? 'bg-rose-500 hover:bg-rose-600 text-white font-bold shadow-lg'
-          : 'bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold shadow-md',
-          isYes && isFinalState && "scale-[120] opacity-100 fixed inset-0 z-[60] rounded-none !m-0 !translate-x-0 !translate-y-0"
-        )}
+        className={`
+          relative flex flex-col items-center justify-center transition-all duration-300 active:scale-95 group
+          w-48 h-36 rounded-[2.5rem]
+          ${isYes
+            ? 'bg-rose-500 hover:bg-rose-600 text-white font-bold shadow-lg'
+            : 'bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold shadow-md'
+          }
+          ${isYes && isFinalState && "scale-[120] opacity-100 fixed inset-0 z-[60] rounded-none !m-0 !translate-x-0 !translate-y-0"}
+        `}
       >
         <div className={`flex gap-3 mb-3 scale-110 md:scale-125 transition-all duration-300 ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
             <Eye pos={pupilPos} mood={getMood()} />
             <Eye pos={pupilPos} mood={getMood()} />
         </div>
 
-        <div className={cn('flex items-center gap-2 transition-opacity', isFinalState ? 'opacity-0' : 'opacity-100')}>
+        <div className={`flex items-center gap-2 transition-opacity ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
             {isYes && <Heart size={20} fill="white" />}
-            <span className={cn('font-black tracking-[0.2em]', isYes ? 'text-xl' : 'text-lg')}>
+            <span className={`font-black tracking-[0.2em] ${isYes ? 'text-xl' : 'text-lg'}`}>
               {label}{isYes ? '!' : '...'}
             </span>
         </div>
@@ -851,5 +854,4 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
     </div>
   );
 };
-
-    
+```
