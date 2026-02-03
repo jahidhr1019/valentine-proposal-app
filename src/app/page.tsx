@@ -82,6 +82,8 @@ export default function Home() {
     if (isHeartbroken) return;
 
     setIsHeartbroken(true);
+    setYesButtonScale(prev => prev + 0.4);
+    setNoButtonScale(prev => Math.max(0.3, prev * 0.9));
 
     setTimeout(() => {
         setIsHeartbroken(false);
@@ -804,7 +806,7 @@ const LivingButton = ({
   const isYes = type === 'yes';
 
   const checkOverlap = (rectA: DOMRect, rectB: DOMRect) => {
-      const buffer = 50;
+      const buffer = 100;
       return !(
           rectA.right < rectB.left - buffer ||
           rectA.left > rectB.right + buffer ||
