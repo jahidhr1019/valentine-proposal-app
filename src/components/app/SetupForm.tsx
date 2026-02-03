@@ -20,7 +20,7 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, Plus } from 'lucide-react';
 import type { UserData } from '@/lib/types';
-import { PlaceHolderImages, type ImagePlaceholder } from '@/lib/placeholder-images';
+import { type ImagePlaceholder } from '@/lib/placeholder-images';
 
 const formSchema = z.object({
   yourName: z.string().min(1, { message: "Please enter your name." }),
@@ -42,24 +42,32 @@ export default function SetupForm({ onSubmit }: SetupFormProps) {
     },
   });
 
-  const [availablePhotos, setAvailablePhotos] = useState<ImagePlaceholder[]>(PlaceHolderImages);
+  const [availablePhotos, setAvailablePhotos] = useState<ImagePlaceholder[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<ImagePlaceholder[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string;
-        const newPhoto: ImagePlaceholder = {
-          id: `user-photo-${Date.now()}`,
-          description: file.name,
-          imageUrl,
-        };
-        setAvailablePhotos((prev) => [newPhoto, ...prev]);
-      };
-      reader.readAsDataURL(file);
+    const files = event.target.files;
+    if (files) {
+      const filePromises = Array.from(files).map((file) => {
+        return new Promise<ImagePlaceholder>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const imageUrl = e.target?.result as string;
+            resolve({
+              id: `user-photo-${Date.now()}-${file.name}-${Math.random()}`,
+              description: file.name,
+              imageUrl,
+            });
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(filePromises).then((newPhotos) => {
+        setAvailablePhotos((prev) => [...newPhotos, ...prev]);
+      });
     }
   };
 
@@ -140,7 +148,7 @@ export default function SetupForm({ onSubmit }: SetupFormProps) {
                 >
                   <div className="text-center text-muted-foreground">
                     <Plus className="mx-auto h-8 w-8" />
-                    <p>Upload Photo</p>
+                    <p>Upload Photos</p>
                   </div>
                   <input
                     type="file"
@@ -148,6 +156,7 @@ export default function SetupForm({ onSubmit }: SetupFormProps) {
                     onChange={handleFileUpload}
                     className="hidden"
                     accept="image/*"
+                    multiple
                   />
                 </div>
                 {availablePhotos.map((photo) => (
