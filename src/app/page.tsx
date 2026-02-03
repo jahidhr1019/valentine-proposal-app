@@ -250,8 +250,6 @@ const LoveOdyssey = ({
         <img src={displayImages[currentIndex]} className="w-full h-full object-cover" alt="" />
       </div>
       
-      <FloatingHearts count={20} />
-
       <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center h-full">
         {/* The Artistic Frame - Centered in the viewport */}
         <div className={`relative group rounded-2xl transition-all duration-1000 transform hover:scale-105 ${frameStyles.outer}`}>
