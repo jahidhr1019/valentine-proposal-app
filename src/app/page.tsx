@@ -174,6 +174,63 @@ const themeConfigs = {
   }
 };
 
+const celebrationThemes = {
+  COSMIC: {
+    name: 'Cosmic Voyage',
+    bg: 'bg-[#020617]',
+    accent: 'text-cyan-400',
+    particle: '✨',
+    title: 'Across the Universe...',
+    subtitle: 'Our love is written in the stars.',
+    font: 'font-galactic'
+  },
+  RETRO: {
+    name: '8-Bit Love',
+    bg: 'bg-[#0f172a]',
+    accent: 'text-yellow-400',
+    particle: '👾',
+    title: 'LEVEL UP!',
+    subtitle: 'Player 2 Joined the Game.',
+    font: 'font-retro'
+  },
+  ROYAL: {
+    name: 'Royal Romance',
+    bg: 'bg-[#1e1b4b]',
+    accent: 'text-amber-400',
+    particle: '👑',
+    title: 'A Royal Decree',
+    subtitle: 'The Kingdom celebrates our union.',
+    font: 'font-headline'
+  },
+  ENCHANTED: {
+    name: 'Enchanted Forest',
+    bg: 'bg-[#064e3b]',
+    accent: 'text-emerald-300',
+    particle: '🌸',
+    title: 'Pure Magic',
+    subtitle: 'Our love blooms in every corner of the world.',
+    font: 'font-body'
+  },
+  JAZZ: {
+    name: 'Midnight Jazz',
+    bg: 'bg-[#18181b]',
+    accent: 'text-yellow-600',
+    particle: '🎷',
+    title: 'The Perfect Note',
+    subtitle: 'Our harmony is a masterpiece.',
+    font: 'font-headline'
+  },
+  MATRIX: {
+    name: 'System Override',
+    bg: 'bg-black',
+    accent: 'text-green-500',
+    particle: '01',
+    title: 'LOVE_FOUND',
+    subtitle: 'Breaking the simulation, together.',
+    font: 'font-code'
+  }
+};
+
 
 export default function Home() {
   const [setupData, setSetupData] = useState<SetupData>({
@@ -396,8 +453,15 @@ const FallingBrokenHearts = ({ count }: FloatingHeartsProps) => {
 
 const CelebrationScreen = () => {
     const [mounted, setMounted] = useState(false);
+    const [theme, setTheme] = useState(celebrationThemes.COSMIC); // Default theme
+
     useEffect(() => {
         setMounted(true);
+        if (typeof window !== 'undefined') {
+            const themeKeys = Object.keys(celebrationThemes);
+            const randomThemeKey = themeKeys[Math.floor(Math.random() * themeKeys.length)] as keyof typeof celebrationThemes;
+            setTheme(celebrationThemes[randomThemeKey]);
+        }
     }, []);
 
     if (!mounted) {
@@ -405,67 +469,60 @@ const CelebrationScreen = () => {
     }
 
     return (
-        <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden">
-            <ConfettiExplosion />
-            <div className="relative z-10 text-center animate-in fade-in-0 zoom-in-90 duration-1000">
-                <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-rose-600 to-pink-500 bg-[length:200%_auto] animate-gradient-x mb-4">
-                    YES!
+        <div className={cn("fixed inset-0 flex flex-col items-center justify-center overflow-hidden", theme.bg)}>
+            <ParticleExplosion particle={theme.particle} accent={theme.accent} />
+            <div className={cn("relative z-10 text-center animate-in fade-in-0 zoom-in-90 duration-1000", theme.font)}>
+                <h1 className={cn("text-6xl md:text-8xl font-black mb-4", theme.accent, {'text-4xl md:text-6xl': theme.name === '8-Bit Love'})}>
+                    {theme.title}
                 </h1>
-                <p className="text-rose-200/60 font-bold tracking-[0.3em] uppercase text-sm animate-in fade-in delay-300 duration-1000 fill-mode-both">
-                    You made the right choice, I will always be there for you!
+                <p className={cn("font-bold tracking-[0.3em] uppercase text-sm animate-in fade-in delay-300 duration-1000 fill-mode-both opacity-60", theme.accent)}>
+                    {theme.subtitle}
                 </p>
             </div>
-             <style>{`
-                @keyframes gradient-x {
-                0% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-                100% { background-position: 0% 50%; }
-                }
-                .animate-gradient-x { animation: gradient-x 4s ease infinite; }
-            `}</style>
         </div>
     );
 };
 
-const ConfettiExplosion = () => {
-    const [confetti, setConfetti] = useState<any[]>([]);
+const ParticleExplosion = ({ particle, accent }: { particle: string; accent: string }) => {
+    const [particles, setParticles] = useState<any[]>([]);
 
     useEffect(() => {
-        const generatedConfetti = Array.from({ length: 150 }).map((_, i) => ({
-            id: i,
-            x: (Math.random() - 0.5) * 2000,
-            y: (Math.random() - 0.5) * 2000,
-            size: Math.random() * 25 + 10,
-            rotation: Math.random() * 1080 - 540,
-            delay: Math.random() * 0.5,
-            duration: Math.random() * 2 + 1,
-            color: ['#be123c', '#fecdd3', '#fda4af', '#fb7185', '#fff1f2'][Math.floor(Math.random() * 5)]
-        }));
-        setConfetti(generatedConfetti);
+        if (typeof window !== 'undefined') {
+            const generatedParticles = Array.from({ length: 150 }).map((_, i) => ({
+                id: i,
+                x: (Math.random() - 0.5) * 2000,
+                y: (Math.random() - 0.5) * 2000,
+                scale: Math.random() * 1.5 + 0.5,
+                rotation: Math.random() * 1080 - 540,
+                delay: Math.random() * 0.5,
+                duration: Math.random() * 2 + 1,
+            }));
+            setParticles(generatedParticles);
+        }
     }, []);
 
     return (
         <div className="absolute inset-0 w-full h-full pointer-events-none">
-            {confetti.map(c => (
+            {particles.map(p => (
                 <div
-                    key={c.id}
-                    className="absolute top-1/2 left-1/2"
+                    key={p.id}
+                    className={cn("absolute top-1/2 left-1/2 text-2xl", accent)}
                     style={{
-                        '--x-end': `${c.x}px`,
-                        '--y-end': `${c.y}px`,
-                        '--rotate-end': `${c.rotation}deg`,
-                        width: `${c.size}px`,
-                        color: c.color,
-                        animation: `explode ${c.duration}s ease-out ${c.delay}s forwards`,
-                    }}
+                        '--x-end': `${p.x}px`,
+                        '--y-end': `${p.y}px`,
+                        '--scale-end': `${p.scale}`,
+                        '--rotate-end': `${p.rotation}deg`,
+                        animation: `explode ${p.duration}s ease-out ${p.delay}s forwards`,
+                        opacity: 0,
+                    } as React.CSSProperties}
                 >
-                    <HeartSVG className="w-full h-full" />
+                    {particle}
                 </div>
             ))}
             <style>{`
                 @keyframes explode {
                     0% { transform: translate(0, 0) scale(0) rotate(0deg); opacity: 1; }
-                    100% { transform: translate(var(--x-end), var(--y-end)) scale(1) rotate(var(--rotate-end)); opacity: 0; }
+                    100% { transform: translate(var(--x-end), var(--y-end)) scale(var(--scale-end)) rotate(var(--rotate-end)); opacity: 0; }
                 }
             `}</style>
         </div>
