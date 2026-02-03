@@ -36,6 +36,7 @@ type LivingButtonProps = {
   rejectionCount?: number;
   yesButtonScale: number;
   noButtonScale: number;
+  id?: string;
 };
 
 type HeartSVGProps = {
@@ -123,7 +124,7 @@ export default function Home() {
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentTheme.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentTheme.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
-        <FloatingHearts count={30} />
+        <FloatingHearts count={50} />
       </div>
 
       <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
@@ -140,6 +141,7 @@ export default function Home() {
       <div className="w-full h-full absolute inset-0 z-40">
         <div className="relative w-full h-full">
           <LivingButton 
+            id="yes-button"
             type="yes" 
             label="YES"
             onClick={handleYesClicked}
@@ -147,7 +149,8 @@ export default function Home() {
             yesButtonScale={yesButtonScale}
             noButtonScale={noButtonScale}
           />
-          <LivingButton 
+          <LivingButton
+            id="no-button"
             key={rejectionCount} 
             type="no" 
             label="NO"
@@ -628,7 +631,8 @@ const LivingButton = ({
   isFinalState, 
   rejectionCount = 0,
   yesButtonScale,
-  noButtonScale 
+  noButtonScale,
+  id
 }: LivingButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
@@ -638,6 +642,16 @@ const LivingButton = ({
   const [isPaused, setIsPaused] = useState(false);
 
   const isYes = type === 'yes';
+
+  const checkOverlap = (rectA: DOMRect, rectB: DOMRect) => {
+      const buffer = 30; // A little extra padding
+      return !(
+          rectA.right < rectB.left - buffer ||
+          rectA.left > rectB.right + buffer ||
+          rectA.bottom < rectB.top - buffer ||
+          rectA.top > rectB.bottom + buffer
+      );
+  };
 
   // Determine eye expression based on current behavior
   const getMood = () => {
@@ -658,10 +672,43 @@ const LivingButton = ({
     const tactic = tactics[Math.floor(Math.random() * tactics.length)];
     setMode(tactic);
 
-    // Leap to a new random position on screen
-    const padding = 120;
-    const nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
-    const ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
+    const yesButton = document.getElementById('yes-button');
+    const noButton = buttonRef.current;
+
+    if (!noButton) return;
+
+    let nx, ny;
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    do {
+      const padding = 120;
+      nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
+      ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
+
+      // Estimate the "No" button's future bounding box
+      const noButtonWidth = noButton.offsetWidth;
+      const noButtonHeight = noButton.offsetHeight;
+      const futureNoRect = {
+        left: window.innerWidth / 2 + nx - noButtonWidth / 2,
+        top: window.innerHeight / 2 + ny - noButtonHeight / 2,
+        right: window.innerWidth / 2 + nx + noButtonWidth / 2,
+        bottom: window.innerHeight / 2 + ny + noButtonHeight / 2,
+        width: noButtonWidth,
+        height: noButtonHeight,
+      } as DOMRect;
+
+      const yesRect = yesButton?.getBoundingClientRect();
+
+      // If the "Yes" button isn't found, or if there's no overlap, we've found a good spot.
+      if (!yesRect || !checkOverlap(futureNoRect, yesRect)) {
+        break;
+      }
+
+      attempts++;
+    } while (attempts < maxAttempts);
+
+
     setPosition({ x: nx, y: ny });
 
     // Reset the visual effect after 1 second
@@ -713,6 +760,7 @@ const LivingButton = ({
 
   return (
     <button
+      id={id}
       ref={buttonRef}
       onClick={isYes ? onClick : onCaught}
       onMouseEnter={!isYes ? triggerEvasion : undefined}
