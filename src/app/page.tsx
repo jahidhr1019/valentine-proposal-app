@@ -26,7 +26,6 @@ type LoveOdysseyProps = {
   userImages: ImageWithCaption[];
   partnerName: string;
   yourName: string;
-  message: string;
 };
 
 type SetupPageProps = {
@@ -319,7 +318,6 @@ export default function Home() {
         userImages={setupData.images} 
         partnerName={setupData.partnerName}
         yourName={setupData.yourName}
-        message={setupData.message}
       />
     );
   }
@@ -559,8 +557,7 @@ const ParticleExplosion = ({ particle, accent }: { particle: string; accent: str
 const LoveOdyssey = ({ 
   userImages, 
   partnerName, 
-  yourName,
-  message
+  yourName
 }: LoveOdysseyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMessage, setShowMessage] = useState(true);
@@ -616,11 +613,7 @@ const LoveOdyssey = ({
   const frameStyles = getFrameStyles(currentIndex);
   const currentImage = displayImages[currentIndex];
   
-  const finalMessage = message || "Will you be my Valentine?";
-  
-  const caption = userImages.length > 0 
-    ? (currentImage.caption || defaultCaptions[currentIndex % defaultCaptions.length]) 
-    : finalMessage;
+  const caption = currentImage.caption || defaultCaptions[currentIndex % defaultCaptions.length];
 
   return (
     <div className="fixed inset-0 bg-[#020617] flex items-center justify-center overflow-hidden z-[100] p-4 font-sans">
