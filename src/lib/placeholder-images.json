@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "couple-holding-hands",
+      "description": "A close-up shot of a couple holding hands, symbolizing connection and love.",
+      "imageUrl": "https://images.unsplash.com/photo-1505765052322-75804bb2e5f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjb3VwbGUlMjBoYW5kc3xlbnwwfHx8fDE3NzAxMTkwMzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "couple hands"
+    },
+    {
+      "id": "romantic-sunset",
+      "description": "A beautiful sunset over the ocean, creating a romantic and serene atmosphere.",
+      "imageUrl": "https://images.unsplash.com/photo-1596476792213-b30b2dc0e7c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cm9tYW50aWMlMjBzdW5zZXR8ZW58MHx8fHwxNzcwMDE5MTY0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "romantic sunset"
+    },
+    {
+      "id": "rose-bouquet",
+      "description": "A vibrant bouquet of red roses, a classic symbol of love and passion.",
+      "imageUrl": "https://images.unsplash.com/photo-1673277848241-86e145cd7112?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxyb3NlJTIwYm91cXVldHxlbnwwfHx8fDE3NzAxMzI5OTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "rose bouquet"
+    },
+    {
+      "id": "couple-laughing",
+      "description": "A candid photo of a couple laughing together, showcasing joy and shared happiness.",
+      "imageUrl": "https://images.unsplash.com/photo-1619208110262-90c0438c174d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjb3VwbGUlMjBsYXVnaGluZ3xlbnwwfHx8fDE3NzAwMTkxNjR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "couple laughing"
+    },
+    {
+      "id": "engagement-ring-box",
+      "description": "An engagement ring in its box, held out with a scenic background.",
+      "imageUrl": "https://images.unsplash.com/photo-1579555973297-560c43ca7562?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxlbmdhZ2VtZW50JTIwcmluZ3xlbnwwfHx8fDE3NzAxMDY5MDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "engagement ring"
+    },
+    {
+      "id": "picnic-date",
+      "description": "A romantic picnic setup in a park or field.",
+      "imageUrl": "https://images.unsplash.com/photo-1761569443180-9baa5be7a87f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyb21hbnRpYyUyMHBpY25pY3xlbnwwfHx8fDE3NzAwNDMzNzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "romantic picnic"
+    },
+    {
+      "id": "dancing-couple",
+      "description": "A couple dancing together, perhaps under the stars or in a ballroom.",
+      "imageUrl": "https://images.unsplash.com/photo-1605432722372-5f8acd7c7d93?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y291cGxlJTIwZGFuY2luZ3xlbnwwfHx8fDE3NzAwNTQ5MjR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "couple dancing"
+    },
+    {
+      "id": "love-letter",
+      "description": "A handwritten love letter on a rustic wooden table with a cup of coffee.",
+      "imageUrl": "https://images.unsplash.com/photo-1701818587533-cea55ff40ef5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxsb3ZlJTIwbGV0dGVyfGVufDB8fHx8MTc3MDA0NjY5Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "love letter"
+    }
+  ]
 }
