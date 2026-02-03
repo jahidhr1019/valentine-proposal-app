@@ -356,7 +356,7 @@ export default function Home() {
       </div>
 
       <div className="absolute inset-0 z-40">
-        <div className="relative w-full h-full flex items-center justify-center gap-8">
+        <div className="relative w-full h-full flex items-center justify-center gap-4 md:gap-8">
           <LivingButton 
             id="yes-button"
             type="yes" 
@@ -650,7 +650,7 @@ const LoveOdyssey = ({
         </div>
 
         {showMessage && (
-          <div className="p-6 md:p-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
+          <div className="p-4 sm:p-6 md:p-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
             <p className="text-rose-100/70 text-sm md:text-base font-light leading-relaxed px-2">
               "{caption}"
             </p>
@@ -840,12 +840,12 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
       </div>
 
       <div className="relative w-full max-w-xl z-10">
-        <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl overflow-hidden group">
+        <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[3rem] p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden group">
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30 group-hover:scale-110 transition-transform duration-500">
               <HeartSVG className="w-8 h-8 text-rose-500 animate-pulse" />
             </div>
-            <h1 className="text-4xl font-black text-white tracking-tight mb-2">Digital Odyssey</h1>
+            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">Digital Odyssey</h1>
             <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">Customize your proposal</p>
           </div>
 
@@ -1232,7 +1232,7 @@ const LivingButton = ({
       <button
         onClick={isYes ? onClick : onCaught}
         className={cn(
-          "flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl cursor-pointer",
+          "flex items-center gap-2 md:gap-4 px-6 py-3 md:px-8 md:py-4 rounded-full border-4 shadow-2xl cursor-pointer",
           isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-100 border-slate-300 text-slate-800"
         )}
       >
@@ -1240,7 +1240,7 @@ const LivingButton = ({
           <Eye pos={pupilPos} mood={mood} />
           <Eye pos={pupilPos} mood={mood} />
         </div>
-        <span className="text-2xl font-black italic uppercase tracking-tighter">{label}</span>
+        <span className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">{label}</span>
       </button>
     </div>
   );
