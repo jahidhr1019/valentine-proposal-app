@@ -54,15 +54,14 @@ const themeConfigs = {
   romantic: {
     initialMessage: "Will you be my Valentine?",
     rejectionMessages: [
-      "Are you absolutely sure?",
+      "I'll do spider duty... for a year.",
+      "I'll give you the TV remote on Sundays!",
+      "A lifetime supply of forehead kisses?",
+      "Okay, final offer: I'll let you have the last slice of pizza... forever.",
+      "Think of all the puppies we could adopt!",
       "My heart can't take it!",
-      "This is our love story!",
-      "But... but... I love you!",
-      "Please say yes?",
-      "I'll keep asking forever...",
-      "My heart skips a beat for you",
       "Is this a 'yes' in disguise?",
-      "I'll build you an empire!",
+      "I'll build you an empire of cuddles!",
       "Don't do this to me!",
       "I'm nothing without you.",
       "Last chance, I'm begging!",
@@ -78,9 +77,9 @@ const themeConfigs = {
   cyber: {
     initialMessage: "Accessing Heart... Security Bypass Required.",
     rejectionMessages: [
-      "Access Denied. Retry?",
-      "Firewall holding. Is this your final answer?",
-      "System integrity critical!",
+      "Access Denied. Offering premium features: unlimited RAM for your heart.",
+      "Firewall holding. I'll debug your code forever.",
+      "System integrity critical! Granting you root access to my heart...",
       "My core logic depends on you.",
       "Please provide authentication (a 'Yes')...",
       "Re-routing past rejection protocols...",
@@ -103,14 +102,14 @@ const themeConfigs = {
     initialMessage: "In all of the universe, you're my favorite star. Will you join my orbit?",
     rejectionMessages: [
         "Is this a black hole pulling us apart?",
-        "My sensors indicate a negative response. Re-calibrating...",
-        "Are you lost in another galaxy?",
+        "My sensors indicate a negative response. I'll name a constellation after you!",
+        "Offering you co-pilot status on my starship for life.",
         "Don't let our connection become a supernova!",
         "My starship's heart is breaking.",
         "Please don't eject me into the void!",
         "The cosmos feels empty without you.",
         "The stars are dimming...",
-        "I'd cross black holes for you!",
+        "I'd cross black holes for a 'Yes'!",
         "Houston, we have a problem!",
         "My universe is collapsing.",
         "Last light-year chance!",
@@ -127,12 +126,12 @@ const themeConfigs = {
     initialMessage: "Player 1 seeks Player 2 for a permanent co-op session.",
     rejectionMessages: [
         "Wrong button, try again!",
-        "Are you playing on hard mode?",
+        "Are you playing on hard mode? I'll give you all my extra lives!",
         "My final life depends on it!",
-        "Don't make me use a cheat code for your heart!",
+        "Offering a cheat code for infinite hugs.",
         "This is not a speedrun!",
         "You've found the 'No' easter egg. Now find 'Yes'!",
-        "Player 2 has disconnected.",
+        "You are the final boss of my heart!",
         "Is my princess in another castle?",
         "Game Over?",
         "I'm losing all my power-ups!",
@@ -151,10 +150,10 @@ const themeConfigs = {
     initialMessage: "Mission Brief: Operation Forever. Do you accept the assignment?",
     rejectionMessages: [
         "Agent, you are going rogue!",
-        "This is not part of the mission plan!",
+        "This is a high-stakes negotiation. I'll declassify my secret cookie stash.",
         "Re-evaluate your objective, agent.",
         "This decision will be classified as a mistake.",
-        "Don't force me to disavow you.",
+        "I'll share my spy gadgets with you.",
         "Our cover will be blown!",
         "The agency needs you... I need you.",
         "Self-destruct sequence initiated...",
@@ -174,60 +173,33 @@ const themeConfigs = {
 };
 
 const celebrationThemes = {
-  COSMIC: {
-    name: 'Cosmic Voyage',
+  GALAXY: {
+    name: 'Galactic Odyssey',
     bg: 'bg-[#020617]',
     accent: 'text-cyan-400',
     particle: '✨',
-    title: 'Across the Universe...',
+    title: 'Across the Universe',
     subtitle: 'Our love is written in the stars.',
     font: 'font-galactic'
   },
-  RETRO: {
-    name: '8-Bit Love',
-    bg: 'bg-[#0f172a]',
-    accent: 'text-yellow-400',
-    particle: '👾',
-    title: 'LEVEL UP!',
-    subtitle: 'Player 2 Joined the Game.',
-    font: 'font-retro'
-  },
-  ROYAL: {
-    name: 'Royal Romance',
-    bg: 'bg-[#1e1b4b]',
-    accent: 'text-amber-400',
-    particle: '👑',
-    title: 'A Royal Decree',
-    subtitle: 'The Kingdom celebrates our union.',
+  DISCO: {
+    name: 'Disco Fever',
+    bg: 'bg-gray-900',
+    accent: 'text-fuchsia-400',
+    particle: '🕺',
+    title: 'You Should Be Dancing',
+    subtitle: 'Yeah!',
     font: 'font-headline'
   },
-  ENCHANTED: {
-    name: 'Enchanted Forest',
-    bg: 'bg-[#064e3b]',
-    accent: 'text-emerald-300',
-    particle: '🌸',
-    title: 'Pure Magic',
-    subtitle: 'Our love blooms in every corner of the world.',
+  SUNSHINE: {
+    name: 'Pocket Full of Sunshine',
+    bg: 'bg-yellow-100',
+    accent: 'text-orange-500',
+    particle: '☀️',
+    title: 'Here Comes The Sun',
+    subtitle: "And I say, it's all right.",
     font: 'font-body'
   },
-  JAZZ: {
-    name: 'Midnight Jazz',
-    bg: 'bg-[#18181b]',
-    accent: 'text-yellow-600',
-    particle: '🎷',
-    title: 'The Perfect Note',
-    subtitle: 'Our harmony is a masterpiece.',
-    font: 'font-headline'
-  },
-  MATRIX: {
-    name: 'System Override',
-    bg: 'bg-black',
-    accent: 'text-green-500',
-    particle: '01',
-    title: 'LOVE_FOUND',
-    subtitle: 'Breaking the simulation, together.',
-    font: 'font-code'
-  }
 };
 
 
@@ -308,6 +280,7 @@ export default function Home() {
 
   return (
     <div className={cn("fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30", isHeartbroken && "animate-shake")}>
+      {rejectionCount > 0 && !isFinalState && <PuppyEyeCursor />}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentThemeConfig.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentThemeConfig.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
@@ -451,7 +424,7 @@ const FallingBrokenHearts = ({ count }: FloatingHeartsProps) => {
 
 const CelebrationScreen = () => {
     const [mounted, setMounted] = useState(false);
-    const [theme, setTheme] = useState(celebrationThemes.COSMIC); // Default theme
+    const [theme, setTheme] = useState(celebrationThemes.GALAXY); // Default theme
 
     useEffect(() => {
         setMounted(true);
@@ -466,14 +439,24 @@ const CelebrationScreen = () => {
         return <div className="fixed inset-0 bg-[#030712]" />;
     }
 
+    const isLight = theme.name === 'Pocket Full of Sunshine';
+
     return (
         <div className={cn("fixed inset-0 flex flex-col items-center justify-center overflow-hidden", theme.bg)}>
             <ParticleExplosion particle={theme.particle} accent={theme.accent} />
             <div className={cn("relative z-10 text-center animate-in fade-in-0 zoom-in-90 duration-1000", theme.font)}>
-                <h1 className={cn("text-6xl md:text-8xl font-black mb-4", theme.accent, {'text-4xl md:text-6xl': theme.name === '8-Bit Love'})}>
+                <h1 className={cn(
+                    "text-6xl md:text-8xl font-black mb-4", 
+                    theme.accent, 
+                    isLight && "text-orange-600 drop-shadow-md"
+                )}>
                     {theme.title}
                 </h1>
-                <p className={cn("font-bold tracking-[0.3em] uppercase text-sm animate-in fade-in delay-300 duration-1000 fill-mode-both opacity-60", theme.accent)}>
+                <p className={cn(
+                    "font-bold tracking-[0.3em] uppercase text-sm animate-in fade-in delay-300 duration-1000 fill-mode-both", 
+                    isLight ? "text-orange-500/80" : "opacity-60",
+                    theme.accent
+                )}>
                     {theme.subtitle}
                 </p>
             </div>
@@ -976,6 +959,38 @@ const Eye = ({ pos, mood }: { pos: {x: number, y: number}, mood: string }) => {
   );
 };
 
+const PuppyEyeCursor = () => {
+  const [position, setPosition] = useState({ x: -200, y: -200 });
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: globalThis.MouseEvent) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+      if (!visible) {
+        setTimeout(() => setVisible(true), 200);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [visible]);
+
+  return (
+    <div 
+      className="fixed top-0 left-0 text-7xl md:text-9xl pointer-events-none z-[999] transition-opacity duration-500 -translate-x-1/2 -translate-y-1/2"
+      style={{ 
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        opacity: visible ? 1 : 0
+      }}
+    >
+      🥺
+    </div>
+  );
+};
 
 const LivingButton = ({ 
   type, 
@@ -1165,4 +1180,3 @@ const LivingButton = ({
     </button>
   );
 };
-
