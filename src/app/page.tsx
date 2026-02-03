@@ -5,24 +5,19 @@ import type { UserData } from '@/lib/types';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 
 import SetupForm from '@/components/app/SetupForm';
-import PhotoSelector from '@/components/app/PhotoSelector';
 import Proposal from '@/components/app/Proposal';
 import PhotoRally from '@/components/app/PhotoRally';
 import FloatingPetals from '@/components/app/FloatingPetals';
 
-type AppState = 'SETUP' | 'PHOTOS' | 'PROPOSAL' | 'RALLY';
+type AppState = 'SETUP' | 'PROPOSAL' | 'RALLY';
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>('SETUP');
   const [userData, setUserData] = useState<UserData | null>(null);
   const [selectedPhotos, setSelectedPhotos] = useState<ImagePlaceholder[]>([]);
 
-  const handleSetupSubmit = (data: UserData) => {
+  const handleSetupSubmit = (data: UserData, photos: ImagePlaceholder[]) => {
     setUserData(data);
-    setAppState('PHOTOS');
-  };
-
-  const handlePhotoSelectSubmit = (photos: ImagePlaceholder[]) => {
     setSelectedPhotos(photos);
     setAppState('PROPOSAL');
   };
@@ -35,8 +30,6 @@ export default function Home() {
     switch (appState) {
       case 'SETUP':
         return <SetupForm onSubmit={handleSetupSubmit} />;
-      case 'PHOTOS':
-        return <PhotoSelector onSubmit={handlePhotoSelectSubmit} />;
       case 'PROPOSAL':
         return <Proposal partnerName={userData?.partnerName || ''} onAccept={handleProposalAccept} />;
       case 'RALLY':
@@ -49,7 +42,7 @@ export default function Home() {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
       <FloatingPetals />
-      <div className="z-10 w-full max-w-2xl">
+      <div className="z-10 w-full max-w-4xl">
         {renderContent()}
       </div>
     </main>
