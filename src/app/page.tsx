@@ -339,7 +339,6 @@ export default function Home() {
 
   return (
     <div className={cn("fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30", isHeartbroken && "animate-shake")}>
-      {rejectionCount > 0 && !isFinalState && <PuppyEyeCursor />}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentThemeConfig.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentThemeConfig.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
@@ -1051,39 +1050,6 @@ const Eye = ({ pos, mood }: { pos: {x: number, y: number}, mood: string }) => {
       {m.blush && <div className="absolute bottom-0 inset-x-0 h-2 md:h-3 bg-rose-400/30 blur-sm animate-pulse" />}
       {m.tear && <div className="absolute bottom-1 left-2 w-1 h-1 md:w-1.5 md:h-1.5 bg-blue-400 rounded-full animate-bounce" />}
       {m.sweat && <div className="absolute top-1 right-1 w-1.5 h-1.5 md:w-2 md:h-2 bg-cyan-200 rounded-full blur-[1px] animate-pulse" />}
-    </div>
-  );
-};
-
-const PuppyEyeCursor = () => {
-  const [position, setPosition] = useState({ x: -200, y: -200 });
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const handleMouseMove = (e: globalThis.MouseEvent) => {
-      setPosition({ x: e.clientX, y: e.clientY });
-      if (!visible) {
-        setTimeout(() => setVisible(true), 200);
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [visible]);
-
-  return (
-    <div 
-      className="fixed top-0 left-0 text-7xl md:text-9xl pointer-events-none z-[999] transition-opacity duration-500 -translate-x-1/2 -translate-y-1/2"
-      style={{ 
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        opacity: visible ? 1 : 0
-      }}
-    >
-      🥺
     </div>
   );
 };
