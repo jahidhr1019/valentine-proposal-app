@@ -800,13 +800,11 @@ const LivingButton = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dynamicOffset, setDynamicOffset] = useState({ x: 0, y: 0 });
   const [mode, setMode] = useState<string | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
-  const [evasionCount, setEvasionCount] = useState(0);
 
   const isYes = type === 'yes';
 
   const checkOverlap = (rectA: DOMRect, rectB: DOMRect) => {
-      const buffer = 50; // Increased buffer for safety
+      const buffer = 50;
       return !(
           rectA.right < rectB.left - buffer ||
           rectA.left > rectB.right + buffer ||
@@ -821,7 +819,6 @@ const LivingButton = ({
     if (isYes) {
         return (dynamicOffset.x !== 0 || dynamicOffset.y !== 0) ? 'blushing' : 'beaming';
     }
-    if (isPaused) return 'exhausted';
     if (mode === 'glitch') return 'grimacing';
     if (mode === 'tornado') return 'astonished';
     if (rejectionCount && rejectionCount > 3) return 'pensive';
@@ -829,18 +826,7 @@ const LivingButton = ({
   };
 
   const triggerEvasion = useCallback(() => {
-    if (isYes || isPaused || isFinalState || mode || isHeartbroken) return;
-
-    if (rejectionCount && rejectionCount > 0 && evasionCount >= 5) {
-        setIsPaused(true);
-        setTimeout(() => {
-            setIsPaused(false);
-            setEvasionCount(0); // Reset for the next cycle
-        }, 1000); // Pause for 1 second
-        return; 
-    }
-    
-    setEvasionCount(prev => prev + 1);
+    if (isYes || isFinalState || mode || isHeartbroken) return;
 
     const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
     const tactic = tactics[Math.floor(Math.random() * tactics.length)];
@@ -882,11 +868,10 @@ const LivingButton = ({
         }
     }
     
-    // Fallback if no safe spot is found
     console.warn("Could not find a non-overlapping position for 'No' button.");
     setTimeout(() => setMode(null), 1000);
 
-  }, [isYes, isPaused, isFinalState, evasionCount, mode, noButtonScale, rejectionCount, isHeartbroken]);
+  }, [isYes, isFinalState, mode, noButtonScale, isHeartbroken]);
 
   useEffect(() => {
     const handleMove = (e: any) => {
@@ -910,10 +895,6 @@ const LivingButton = ({
           setDynamicOffset({ x: 0, y: 0 });
         }
       } else {
-        if (dist < 100 && !isPaused && !mode) {
-           triggerEvasion();
-        }
-
         if (mode === 'newton' && dist < 250) {
           const force = (250 - dist) * 0.4 / (noButtonScale || 1);
           setDynamicOffset({ x: -Math.cos(angle) * force, y: -Math.sin(angle) * force });
@@ -921,7 +902,6 @@ const LivingButton = ({
         else if (mode === 'blackhole' && dist < 300) {
           const force = (300 - dist) * 0.3 / (noButtonScale || 1);
           setDynamicOffset({ x: Math.cos(angle) * force, y: Math.sin(angle) * force });
-          if (dist < 45) triggerEvasion(); 
         } else {
           setDynamicOffset({x: 0, y: 0});
         }
@@ -930,23 +910,28 @@ const LivingButton = ({
 
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [mode, isYes, isFinalState, noButtonScale, triggerEvasion, isPaused, isHeartbroken]);
+  }, [mode, isYes, isFinalState, noButtonScale, isHeartbroken]);
+
+  const handleNoClick = (e: MouseEvent) => {
+    if (onCaught) {
+      onCaught(e);
+    }
+    triggerEvasion();
+  };
 
   return (
     <button
       id={id}
       ref={buttonRef}
-      onClick={isPaused && onCaught ? onCaught : (isYes ? onClick : undefined)}
-      onMouseEnter={!isYes && !isPaused && !isHeartbroken ? triggerEvasion : undefined}
+      onClick={isYes ? onClick : handleNoClick}
       style={{
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
                     calc(-50% + ${position.y + dynamicOffset.y}px)) 
                     scale(${isYes ? yesButtonScale : noButtonScale})`,
       }}
       className={cn(
-        "absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl z-50",
+        "absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl z-50 cursor-pointer",
         isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-100 border-slate-300 text-slate-800",
-        isPaused && "cursor-pointer animate-pulse",
         mode === 'tornado' && "animate-spin",
         mode === 'ghost' && "opacity-20 blur-sm scale-125",
         mode === 'tiny' && "scale-0 opacity-0",
@@ -963,5 +948,3 @@ const LivingButton = ({
     </button>
   );
 };
-
-    
