@@ -632,7 +632,7 @@ const LoveOdyssey = ({
         <h1 className="text-5xl md:text-6xl font-headline text-white drop-shadow-lg">Always & Forever</h1>
       </div>
       
-      <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center h-full">
+      <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center gap-6">
         <div className={`relative group rounded-2xl transition-all duration-1000 transform hover:scale-105 ${frameStyles.outer}`}>
           <div className="bg-slate-900 rounded-xl overflow-hidden shadow-2xl">
             <div className={`relative overflow-hidden aspect-[3/4] w-64 md:w-80 ${frameStyles.inner}`}>
@@ -661,7 +661,7 @@ const LoveOdyssey = ({
         </div>
 
         {showMessage && (
-          <div className="absolute top-[85%] md:top-[80%] p-6 md:p-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
+          <div className="p-6 md:p-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
             <p className="text-rose-100/70 text-sm md:text-base font-light leading-relaxed px-2">
               "{caption}"
             </p>
