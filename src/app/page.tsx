@@ -686,8 +686,8 @@ const LoveOdyssey = ({
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-60" />
             </div>
             
-            <div className="bg-white/5 backdrop-blur-md px-4 py-6 border-t border-white/10 flex flex-col items-center">
-               <span className={`text-2xl md:text-3xl transition-all duration-1000 ${frameStyles.label}`}>
+            <div className="bg-white/5 backdrop-blur-md px-4 py-3 md:py-4 border-t border-white/10 flex flex-col items-center">
+               <span className={`text-xl md:text-2xl transition-all duration-1000 ${frameStyles.label}`}>
                  {partnerName} & {yourName}
                </span>
                <div className="mt-2 flex items-center gap-2">
@@ -702,7 +702,7 @@ const LoveOdyssey = ({
         </div>
 
         {showMessage && (
-          <div className="p-4 sm:p-6 md:p-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
+          <div className="p-4 sm:p-6 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
             <p className="text-rose-100/70 text-sm md:text-base font-light leading-relaxed px-2">
               "{caption}"
             </p>
@@ -731,9 +731,9 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
         Array.from({ length: count }).map((_, i) => ({
           id: i,
           left: Math.random() * 100,
-          size: Math.random() * 15 + 10,
+          size: Math.random() * 25 + 15,
           delay: Math.random() * 5,
-          duration: Math.random() * 8 + 12,
+          duration: Math.random() * 4 + 4,
         }))
       );
     }
@@ -744,13 +744,13 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {hearts.map(h => (
-        <div key={h.id} className="absolute bottom-[-5%] animate-float opacity-20"
+        <div key={h.id} className="absolute bottom-[-5%] animate-float"
           style={{
             left: `${h.left}%`,
             width: `${h.size}px`,
             animationDelay: `${h.delay}s`,
             animationDuration: `${h.duration}s`,
-            color: '#be123c'
+            color: '#ef4444' // rose-500
           }}
         >
           <HeartSVG className="w-full h-full" />
@@ -759,7 +759,8 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
       <style>{`
         @keyframes float {
           0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-          20% { opacity: 0.2; }
+          10% { opacity: 0.6; }
+          90% { opacity: 0.6; }
           100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
         }
         .animate-float { animation: float linear infinite; }
@@ -885,7 +886,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
       </div>
 
       <div className="relative w-full max-w-xl z-10">
-        <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[3rem] p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden group">
+        <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[3rem] p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden group">
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30 group-hover:scale-110 transition-transform duration-500">
               <HeartSVG className="w-8 h-8 text-rose-500 animate-pulse" />
@@ -988,7 +989,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
             <button 
               disabled={!isFormValid}
               onClick={() => onStart(formData)}
-              className={`w-full group/btn relative overflow-hidden py-6 rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500
+              className={`w-full group/btn relative overflow-hidden py-6 rounded-2xl md:rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500
                 ${isFormValid 
                   ? 'bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95' 
                   : 'bg-white/5 text-white/20 cursor-not-allowed'
