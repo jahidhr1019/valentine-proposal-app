@@ -1066,7 +1066,7 @@ const LivingButton = ({
   id,
   isHeartbroken,
 }: LivingButtonProps) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dynamicOffset, setDynamicOffset] = useState({ x: 0, y: 0 });
@@ -1085,7 +1085,7 @@ const LivingButton = ({
       );
   };
 
-  const getMood = () => {
+  const getMood = useCallback(() => {
     if (isHeartbroken) return 'pensive';
     if (isFinalState) return isYes ? 'partying' : 'broken';
     if (isYes) {
@@ -1096,7 +1096,7 @@ const LivingButton = ({
     if (rejectionCount && rejectionCount > 3) return 'exhausted';
     if (isFleeing) return 'astonished';
     return 'neutral';
-  };
+  }, [isHeartbroken, isFinalState, isYes, dynamicOffset, mode, rejectionCount, isFleeing]);
 
   const triggerEvasion = useCallback(() => {
     if (isYes || isFinalState || isHeartbroken) return;
@@ -1125,7 +1125,6 @@ const LivingButton = ({
       const ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
   
       const noButtonRect = noButton.getBoundingClientRect();
-      // Use getBoundingClientRect width/height which accounts for scaling
       const noButtonWidth = noButtonRect.width;
       const noButtonHeight = noButtonRect.height;
   
@@ -1201,11 +1200,21 @@ const LivingButton = ({
 
   const hasStartedFleeing = position.x !== 0 || position.y !== 0;
 
+  const mood = getMood();
+  const moodNotes: Record<string, string> = {
+      pensive: '...why?',
+      broken: '*cracks*',
+      grimacing: 'Ugh!',
+      astonished: 'Whoa!',
+      exhausted: 'So... tired...',
+  };
+  const note = isYes ? '' : moodNotes[mood] || '';
+
+
   return (
-    <button
+    <div
       id={id}
       ref={buttonRef}
-      onClick={isYes ? onClick : onCaught}
       style={!isYes && hasStartedFleeing ? {
         position: 'absolute',
         top: '50%',
@@ -1218,8 +1227,8 @@ const LivingButton = ({
         transform: `translate(${dynamicOffset.x}px, ${dynamicOffset.y}px) scale(${isYes ? yesButtonScale : noButtonScale})`,
       }}
       className={cn(
-        "transition-all duration-300 ease-out flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl cursor-pointer",
-        isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-100 border-slate-300 text-slate-800",
+        "transition-all duration-300 ease-out",
+        "relative flex flex-col items-center",
         !isYes && hasStartedFleeing ? "z-50" : (isYes ? "z-10" : "z-20"),
         mode === 'tornado' && "animate-spin",
         mode === 'ghost' && "opacity-20 blur-sm scale-125",
@@ -1229,11 +1238,27 @@ const LivingButton = ({
         isHeartbroken && "opacity-50"
       )}
     >
-      <div className="flex gap-1">
-        <Eye pos={pupilPos} mood={getMood()} />
-        <Eye pos={pupilPos} mood={getMood()} />
-      </div>
-      <span className="text-2xl font-black italic uppercase tracking-tighter">{label}</span>
-    </button>
+      {!isYes && (
+        <div className={cn(
+          "absolute -top-6 text-center text-sm text-white/60 font-mono transition-opacity duration-300 whitespace-nowrap",
+          note ? 'opacity-100' : 'opacity-0'
+        )}>
+          {note}
+        </div>
+      )}
+      <button
+        onClick={isYes ? onClick : onCaught}
+        className={cn(
+          "flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl cursor-pointer",
+          isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-100 border-slate-300 text-slate-800"
+        )}
+      >
+        <div className="flex gap-1">
+          <Eye pos={pupilPos} mood={mood} />
+          <Eye pos={pupilPos} mood={mood} />
+        </div>
+        <span className="text-2xl font-black italic uppercase tracking-tighter">{label}</span>
+      </button>
+    </div>
   );
 };
