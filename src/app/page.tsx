@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback } from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ImageWithCaption = {
   src: string;
@@ -15,6 +16,7 @@ type SetupData = {
   partnerName: string;
   message: string;
   images: ImageWithCaption[];
+  theme: string;
 };
 
 type LoveOdysseyProps = {
@@ -49,26 +51,143 @@ type FloatingHeartsProps = {
   count: number;
 };
 
-const themes = [
-  { orb1: 'bg-rose-900/10', orb2: 'bg-indigo-900/10' },
-  { orb1: 'bg-sky-900/20', orb2: 'bg-violet-900/20' }, // Midnight
-  { orb1: 'bg-amber-800/10', orb2: 'bg-red-900/10' },   // Sunset
-  { orb1: 'bg-teal-900/10', orb2: 'bg-cyan-900/10' },   // Twilight
-];
+const themeConfigs = {
+  romantic: {
+    initialMessage: "Will you be my Valentine?",
+    rejectionMessages: [
+      "Are you absolutely sure?",
+      "My heart can't take it!",
+      "This is our love story!",
+      "But... but... I love you!",
+      "Please say yes?",
+      "I'll keep asking forever...",
+      "My heart skips a beat for you",
+      "Is this a 'yes' in disguise?",
+      "I'll build you an empire!",
+      "Don't do this to me!",
+      "I'm nothing without you.",
+      "Last chance, I'm begging!",
+    ],
+    partnerName: "My Love",
+    yourName: "A Secret Admirer",
+    font: "font-headline",
+    orb1: "bg-rose-900/10",
+    orb2: "bg-indigo-900/10",
+    spanGradient: "from-rose-400 via-rose-600 to-pink-500",
+    proposalByColor: "text-rose-200/40"
+  },
+  cyber: {
+    initialMessage: "Accessing Heart... Security Bypass Required.",
+    rejectionMessages: [
+      "Access Denied. Retry?",
+      "Firewall holding. Is this your final answer?",
+      "System integrity critical!",
+      "My core logic depends on you.",
+      "Please provide authentication (a 'Yes')...",
+      "Re-routing past rejection protocols...",
+      "Malware detected: my feelings.",
+      "Does not compute... Please reconsider.",
+      "My entire system is crashing!",
+      "Don't pull the plug!",
+      "I am nothing without my user.",
+      "Kernel panic imminent!",
+    ],
+    partnerName: "User",
+    yourName: "Admin",
+    font: "font-code",
+    orb1: "bg-fuchsia-900/20",
+    orb2: "bg-green-900/20",
+    spanGradient: "from-fuchsia-400 via-green-400 to-cyan-400",
+    proposalByColor: "text-green-300/40"
+  },
+  galactic: {
+    initialMessage: "In all of the universe, you're my favorite star. Will you join my orbit?",
+    rejectionMessages: [
+        "Is this a black hole pulling us apart?",
+        "My sensors indicate a negative response. Re-calibrating...",
+        "Are you lost in another galaxy?",
+        "Don't let our connection become a supernova!",
+        "My starship's heart is breaking.",
+        "Please don't eject me into the void!",
+        "The cosmos feels empty without you.",
+        "The stars are dimming...",
+        "I'd cross black holes for you!",
+        "Houston, we have a problem!",
+        "My universe is collapsing.",
+        "Last light-year chance!",
+    ],
+    partnerName: "My Celestial Body",
+    yourName: "Stardate 2024",
+    font: "font-galactic",
+    orb1: "bg-indigo-900/30",
+    orb2: "bg-purple-900/30",
+    spanGradient: "from-cyan-300 via-purple-400 to-indigo-400",
+    proposalByColor: "text-indigo-200/40"
+  },
+  retro: {
+    initialMessage: "Player 1 seeks Player 2 for a permanent co-op session.",
+    rejectionMessages: [
+        "Wrong button, try again!",
+        "Are you playing on hard mode?",
+        "My final life depends on it!",
+        "Don't make me use a cheat code for your heart!",
+        "This is not a speedrun!",
+        "You've found the 'No' easter egg. Now find 'Yes'!",
+        "Player 2 has disconnected.",
+        "Is my princess in another castle?",
+        "Game Over?",
+        "I'm losing all my power-ups!",
+        "I need a 1-UP from you!",
+        "Final Boss: This 'No' button!",
+    ],
+    partnerName: "Player 2",
+    yourName: "Player 1",
+    font: "font-retro",
+    orb1: "bg-blue-900/20",
+    orb2: "bg-orange-900/20",
+    spanGradient: "from-orange-400 via-yellow-400 to-amber-500",
+    proposalByColor: "text-amber-200/40"
+  },
+  agent: {
+    initialMessage: "Mission Brief: Operation Forever. Do you accept the assignment?",
+    rejectionMessages: [
+        "Agent, you are going rogue!",
+        "This is not part of the mission plan!",
+        "Re-evaluate your objective, agent.",
+        "This decision will be classified as a mistake.",
+        "Don't force me to disavow you.",
+        "Our cover will be blown!",
+        "The agency needs you... I need you.",
+        "Self-destruct sequence initiated...",
+        "The world depends on this 'Yes'.",
+        "Redacting this 'No' from the record.",
+        "This is a betrayal!",
+        "Your license to love is being revoked!",
+    ],
+    partnerName: "Agent",
+    yourName: "Control",
+    font: "font-agent",
+    orb1: "bg-gray-800/20",
+    orb2: "bg-red-900/10",
+    spanGradient: "from-gray-400 via-gray-200 to-white",
+    proposalByColor: "text-gray-400/40"
+  }
+};
+
 
 export default function Home() {
   const [setupData, setSetupData] = useState<SetupData>({
     yourName: '',
     partnerName: '',
     message: '',
-    images: []
+    images: [],
+    theme: 'romantic',
   });
   const [isStarted, setIsStarted] = useState(false);
   const [isFinalState, setIsFinalState] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [rejectionCount, setRejectionCount] = useState(0);
-  const [themeIndex, setThemeIndex] = useState(0);
   const [yesButtonScale, setYesButtonScale] = useState(1);
   const [noButtonScale, setNoButtonScale] = useState(1);
   const [isHeartbroken, setIsHeartbroken] = useState(false);
@@ -123,43 +242,35 @@ export default function Home() {
     return <CelebrationScreen />;
   }
 
-  const mainMessages = [
-    "Are you absolutely sure?",
-    "My heart can't take it!",
-    "This is our love story!",
-    "But... but... I love you!",
-    "Please say yes?",
-    "I'll keep asking forever...",
-    "My heart skips a beat for you",
-    "Is this a 'yes' in disguise?",
-    "I'll build you an empire!",
-    "Don't do this to me!",
-    "I'm nothing without you.",
-    "Last chance, I'm begging!",
-  ];
+  const currentThemeConfig = themeConfigs[setupData.theme as keyof typeof themeConfigs] || themeConfigs.romantic;
 
   const proposalMessage = rejectionCount === 0
-    ? (setupData.message || "Will you be my Valentine?")
-    : mainMessages[(rejectionCount - 1) % mainMessages.length];
+    ? (setupData.message || currentThemeConfig.initialMessage)
+    : currentThemeConfig.rejectionMessages[(rejectionCount - 1) % currentThemeConfig.rejectionMessages.length];
   
-  const currentTheme = themes[rejectionCount % themes.length];
+  const partner = setupData.partnerName || currentThemeConfig.partnerName;
+  const you = setupData.yourName || currentThemeConfig.yourName;
 
   return (
     <div className={cn("fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30", isHeartbroken && "animate-shake")}>
       <div className="absolute inset-0 pointer-events-none z-0">
-        <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentTheme.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
-        <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentTheme.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
+        <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentThemeConfig.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
+        <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentThemeConfig.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
         {isHeartbroken ? <FallingBrokenHearts count={50} /> : <FloatingHearts count={250} />}
       </div>
 
       <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
-        <h1 className="text-5xl md:text-8xl font-black mb-4 tracking-tighter text-white drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]">
-          {setupData.partnerName}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-rose-600 to-pink-500 bg-[length:200%_auto] animate-gradient-x">
+        <h1 className={cn(
+            "text-5xl md:text-8xl font-black mb-4 tracking-tighter text-white drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]",
+            currentThemeConfig.font,
+            {'text-3xl md:text-5xl': setupData.theme === 'retro'}
+            )}>
+          {partner}, <span className={cn("text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient-x", currentThemeConfig.spanGradient)}>
             {isHeartbroken ? "Is this really goodbye?" : proposalMessage}
           </span>
         </h1>
-        <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">
-          A Digital Proposal by {setupData.yourName}
+        <p className={cn("font-bold tracking-[0.4em] uppercase text-[10px]", currentThemeConfig.proposalByColor, currentThemeConfig.font)}>
+          A Digital Proposal by {you}
         </p>
       </div>
 
@@ -200,6 +311,12 @@ export default function Home() {
       </div>
       
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&family=Special+Elite&display=swap');
+        
+        .font-retro {
+            text-shadow: 2px 2px #000;
+        }
+
         @keyframes gradient-x {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
@@ -568,7 +685,8 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     yourName: '', 
     partnerName: '', 
     message: '', 
-    images: []
+    images: [],
+    theme: 'romantic'
   });
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -650,10 +768,26 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">The Final Note (Optional)</label>
+                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Proposal Theme</label>
+                <Select value={formData.theme} onValueChange={(value) => setFormData({...formData, theme: value })}>
+                    <SelectTrigger className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-rose-500/50 transition-all">
+                        <SelectValue placeholder="Select a theme" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="romantic">Romantic</SelectItem>
+                        <SelectItem value="cyber">Cyber-Glitch</SelectItem>
+                        <SelectItem value="galactic">Galactic</SelectItem>
+                        <SelectItem value="retro">Retro</SelectItem>
+                        <SelectItem value="agent">Secret Agent</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">The Proposal Question (Optional)</label>
               <textarea 
                 className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white h-24 resize-none outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
-                placeholder="What is it, yes or no?" 
+                placeholder="Will you be my Valentine?" 
                 value={formData.message} 
                 onChange={e => setFormData({...formData, message: e.target.value})} 
               />

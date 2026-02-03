@@ -13,6 +13,9 @@ export default {
         body: ['Lora', 'serif'],
         headline: ['Playfair Display', 'serif'],
         code: ['monospace'],
+        galactic: ['Orbitron', 'sans-serif'],
+        retro: ['"Press Start 2P"', 'cursive'],
+        agent: ['"Special Elite"', 'cursive'],
       },
       colors: {
         background: 'hsl(var(--background))',
