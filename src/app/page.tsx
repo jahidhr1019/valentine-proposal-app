@@ -124,7 +124,6 @@ export default function Home() {
   }
 
   const mainMessages = [
-    "Will You Marry Me?",
     "Are you absolutely sure?",
     "My heart can't take it!",
     "This is our love story!",
@@ -138,6 +137,10 @@ export default function Home() {
     "I'm nothing without you.",
     "Last chance, I'm begging!",
   ];
+
+  const proposalMessage = rejectionCount === 0
+    ? (setupData.message || "Will you be my Valentine?")
+    : mainMessages[(rejectionCount - 1) % mainMessages.length];
   
   const currentTheme = themes[rejectionCount % themes.length];
 
@@ -152,7 +155,7 @@ export default function Home() {
       <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
         <h1 className="text-5xl md:text-8xl font-black mb-4 tracking-tighter text-white drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]">
           {setupData.partnerName}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-rose-600 to-pink-500 bg-[length:200%_auto] animate-gradient-x">
-            {isHeartbroken ? "Is this really goodbye?" : mainMessages[rejectionCount % mainMessages.length]}
+            {isHeartbroken ? "Is this really goodbye?" : proposalMessage}
           </span>
         </h1>
         <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">
