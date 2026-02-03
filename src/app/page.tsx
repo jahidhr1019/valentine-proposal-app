@@ -50,6 +50,13 @@ type EyeProps = {
   mood: string;
 };
 
+const themes = [
+    { orb1: 'bg-rose-900/10', orb2: 'bg-indigo-900/10' },
+    { orb1: 'bg-sky-900/20', orb2: 'bg-violet-900/20' }, // Midnight
+    { orb1: 'bg-amber-800/10', orb2: 'bg-red-900/10' }, // Sunset
+    { orb1: 'bg-teal-900/10', orb2: 'bg-cyan-900/10' }, // Twilight
+];
+
 export default function Home() {
   const [setupData, setSetupData] = useState<SetupData>({
     yourName: '',
@@ -61,6 +68,7 @@ export default function Home() {
   const [isFinalState, setIsFinalState] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [rejectionCount, setRejectionCount] = useState(0);
+  const [themeIndex, setThemeIndex] = useState(0);
 
   const handleStart = (data: SetupData) => {
     setSetupData(data);
@@ -69,6 +77,7 @@ export default function Home() {
 
   const handleNoClicked = () => {
     setRejectionCount(prev => prev + 1);
+    setThemeIndex(prev => (prev + 1) % themes.length);
   };
 
   const handleYesClicked = (e?: MouseEvent) => {
@@ -95,22 +104,27 @@ export default function Home() {
   }
 
   const mainMessages = [
-    "Will You?",
-    "Are you sure?",
-    "Think again?",
-    "Really...?",
-    "But why?",
-    "Please?",
-    "I'll ask forever..."
+    "Will You Marry Me?",
+    "Are you absolutely sure?",
+    "My heart can't take it!",
+    "This is our love story!",
+    "But... but... I love you!",
+    "Please say yes?",
+    "I'll keep asking forever...",
+    "My heart skips a beat for you",
+    "Is this a 'yes' in disguise?",
+    "I'll build you an empire!",
   ];
+  
+  const currentTheme = themes[themeIndex];
 
   return (
     <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30">
       
       {/* --- BACKGROUND AMBIANCE --- */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-rose-900/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-indigo-900/10 rounded-full blur-[120px] animate-pulse delay-1000" />
+        <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentTheme.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
+        <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentTheme.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
         <FloatingHearts count={12} />
       </div>
 
@@ -463,7 +477,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
       <button
         ref={buttonRef}
         type="button"
-        onClick={isYes ? onClick : (teleports >= maxAttempts ? onCaught : undefined)}
+        onClick={isYes ? onClick : onCaught}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => { setIsHovered(false); setMagneticOffset({x:0, y:0}); }}
         className={`
