@@ -3,12 +3,10 @@
 import React, { useState, useEffect, useRef, useMemo, ChangeEvent, MouseEvent } from 'react';
 
 /**
- * EMOTIONAL PROPOSAL APP
- * * FEATURES:
- * - Setup Screen: Personalize names and upload photos.
- * - Dynamic Header: Changes text as the user tries to click "NO".
- * - Living Buttons: "YES" follows you, "NO" runs away and gets tired.
- * - Love Odyssey Success: A cinematic slideshow of memories with a custom message.
+ * EMOTIONAL PROPOSAL APP - REFINED LAYOUT
+ * - Fixed Z-index stacking (Header > Buttons > Background).
+ * - Safe-zone teleportation for the "NO" button.
+ * - Aspect-ratio locked, non-distorting image frames.
  */
 
 type SetupData = {
@@ -35,6 +33,7 @@ type LivingButtonProps = {
   onClick?: (e?: MouseEvent) => void;
   onCaught?: () => void;
   isFinalState: boolean;
+  rejectionCount?: number;
 };
 
 type HeartSVGProps = {
@@ -49,7 +48,6 @@ type EyeProps = {
   pos: { x: number; y: number };
   mood: string;
 };
-
 
 export default function Home() {
   const [setupData, setSetupData] = useState<SetupData>({
@@ -72,11 +70,9 @@ export default function Home() {
     setRejectionCount(prev => prev + 1);
   };
 
-  const handleYesClicked = (e?: React.MouseEvent) => {
-    // Prevent event bubbling just in case
+  const handleYesClicked = (e?: MouseEvent) => {
     if (e) e.stopPropagation();
     setIsFinalState(true);
-    // Short delay for the "YES" button to expand and cover the screen
     setTimeout(() => {
       setShowSuccess(true);
     }, 800);
@@ -108,18 +104,18 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center p-8 overflow-hidden relative selection:bg-rose-500/30">
+    <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30">
       
       {/* --- BACKGROUND AMBIANCE --- */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] bg-rose-900/10 rounded-full blur-[160px] animate-pulse" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[80%] bg-indigo-900/10 rounded-full blur-[160px] animate-pulse delay-1000" />
-        <FloatingHearts count={15} />
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-rose-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-indigo-900/10 rounded-full blur-[120px] animate-pulse delay-1000" />
+        <FloatingHearts count={12} />
       </div>
 
       {/* --- MAIN HEADER --- */}
-      <div className={`absolute top-24 text-center z-10 transition-all duration-1000 ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
-        <h1 className="text-7xl md:text-9xl font-black mb-6 tracking-tighter text-white drop-shadow-[0_0_40px_rgba(225,29,72,0.3)]">
+      <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
+        <h1 className="text-5xl md:text-8xl font-black mb-4 tracking-tighter text-white drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]">
           {setupData.partnerName}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-rose-600 to-pink-500 bg-[length:200%_auto] animate-gradient-x">
             {mainMessages[rejectionCount % mainMessages.length]}
           </span>
@@ -130,7 +126,7 @@ export default function Home() {
       </div>
 
       {/* --- BUTTON CANVAS --- */}
-      <div className="w-full h-full fixed inset-0">
+      <div className="w-full h-full absolute inset-0 z-40">
         <div className="relative w-full h-full">
           <LivingButton 
             type="yes" 
@@ -144,16 +140,17 @@ export default function Home() {
             label="NO"
             onCaught={handleNoClicked} 
             isFinalState={isFinalState} 
+            rejectionCount={rejectionCount}
           />
         </div>
       </div>
 
       {/* --- FOOTER FEEDBACK --- */}
-      <div className="absolute bottom-16 z-10 pointer-events-none">
-          <div className="px-8 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
-            <div className="text-rose-400 font-bold text-[10px] tracking-[0.5em] uppercase flex items-center gap-4">
-              {rejectionCount === 0 ? "Chase the heart" : `Heartbreak Attempt ${rejectionCount}`}
-              {rejectionCount > 10 && <span className="text-white/40">It's getting tired...</span>}
+      <div className={`absolute bottom-12 z-50 pointer-events-none transition-opacity duration-500 ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
+          <div className="px-6 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
+            <div className="text-rose-400 font-bold text-[9px] tracking-[0.4em] uppercase flex items-center gap-3">
+              {rejectionCount === 0 ? "Chase the heart" : `Attempt ${rejectionCount}`}
+              {rejectionCount > 10 && <span className="text-white/40 animate-pulse">Running out of breath...</span>}
             </div>
           </div>
       </div>
@@ -169,8 +166,6 @@ export default function Home() {
     </div>
   );
 }
-
-// --- SUCCESS ODYSSEY COMPONENT ---
 
 const LoveOdyssey = ({ userImages, customMessage, partnerName, yourName }: LoveOdysseyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -188,78 +183,56 @@ const LoveOdyssey = ({ userImages, customMessage, partnerName, yourName }: LoveO
     const slideInterval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % displayImages.length);
     }, 4000);
-
-    setTimeout(() => setShowMessage(true), 1500);
-
+    setTimeout(() => setShowMessage(true), 1200);
     return () => clearInterval(slideInterval);
   }, [displayImages.length]);
 
   return (
-    <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden z-[100]">
-      {/* Background Slideshow (Blurry) */}
-      <div className="absolute inset-0 transition-all duration-1000 scale-110 blur-3xl opacity-30">
-        <img src={displayImages[currentIndex]} className="w-full h-full object-cover" alt="backdrop" />
+    <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden z-[100] p-4">
+      <div className="absolute inset-0 transition-all duration-1000 scale-110 blur-3xl opacity-20">
+        <img src={displayImages[currentIndex]} className="w-full h-full object-cover" alt="" />
       </div>
-
-      <FloatingHearts count={40} />
-
-      {/* Main Content */}
-      <div className="relative w-full max-w-4xl px-6 z-10 flex flex-col items-center">
-        
-        {/* Photo Card */}
-        <div className="relative group perspective-1000">
-          <div className="bg-white p-4 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] transform transition-all duration-1000 animate-in zoom-in-75">
-            <div className="relative overflow-hidden aspect-[4/5] w-72 md:w-96">
-              <img 
-                key={currentIndex}
-                src={displayImages[currentIndex]} 
-                className="w-full h-full object-cover animate-in fade-in zoom-in-110 duration-1000"
-                alt="Memory"
-              />
-              <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.2)]" />
-            </div>
-            <div className="pt-6 pb-2 text-center">
-               <p className="font-serif text-2xl md:text-3xl text-slate-800 italic">
-                 {partnerName} & {yourName}
-               </p>
-               <p className="text-slate-400 text-[10px] font-mono tracking-widest uppercase mt-2">Our Forever Story</p>
-            </div>
+      
+      <div className="relative w-full max-w-lg z-10 flex flex-col items-center">
+        <div className="relative group bg-white p-3 md:p-4 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] animate-in zoom-in-90 duration-700">
+          <div className="relative overflow-hidden aspect-[4/5] w-64 md:w-80 bg-slate-100">
+            <img 
+              key={currentIndex}
+              src={displayImages[currentIndex]} 
+              className="w-full h-full object-cover animate-in fade-in zoom-in-105 duration-1000"
+              alt="Memory"
+            />
+          </div>
+          <div className="pt-4 pb-1 text-center">
+             <p className="font-serif text-xl md:text-2xl text-slate-800 italic">
+               {partnerName} & {yourName}
+             </p>
+             <p className="text-slate-400 text-[8px] font-mono tracking-widest uppercase mt-1">Our Forever Story</p>
           </div>
         </div>
 
-        {/* Cinematic Message */}
         {showMessage && (
-          <div className="mt-12 p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500 shadow-2xl">
-            <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500 mb-6 text-center tracking-tight">
+          <div className="mt-8 p-6 md:p-8 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl animate-in fade-in slide-in-from-bottom-10 duration-1000 shadow-2xl text-center">
+            <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500 mb-4 tracking-tight">
               She Said Yes!
             </h2>
-            <p className="text-rose-100 text-lg md:text-xl font-light italic leading-relaxed text-center max-w-lg mx-auto">
+            <p className="text-rose-100/80 text-base md:text-lg font-light italic leading-relaxed max-w-sm mx-auto">
               "{customMessage}"
             </p>
-            <div className="mt-8 flex justify-center gap-4">
-               <div className="w-12 h-12 bg-rose-500/20 rounded-full flex items-center justify-center animate-bounce">
-                  <HeartSVG className="w-6 h-6 text-rose-500" />
-               </div>
-               <div className="w-12 h-12 bg-rose-500/20 rounded-full flex items-center justify-center animate-bounce delay-150">
-                  <HeartSVG className="w-6 h-6 text-rose-500" />
-               </div>
+            <div className="mt-6 flex justify-center gap-4">
+               <HeartSVG className="w-8 h-8 text-rose-500 animate-bounce" />
+               <HeartSVG className="w-8 h-8 text-rose-500 animate-bounce delay-150" />
             </div>
           </div>
         )}
       </div>
 
-      <button onClick={() => window.location.reload()} className="fixed bottom-8 text-rose-400 text-[10px] font-black tracking-[0.4em] uppercase opacity-30 hover:opacity-100 transition-opacity z-[110]">
-        Reset Presentation
+      <button onClick={() => window.location.reload()} className="absolute bottom-6 text-rose-400 text-[9px] font-black tracking-[0.4em] uppercase opacity-40 hover:opacity-100 transition-opacity z-[110]">
+        Restart
       </button>
-
-      <style>{`
-        .perspective-1000 { perspective: 1000px; }
-      `}</style>
     </div>
   );
 };
-
-// --- CORE UI SUB-COMPONENTS ---
 
 const HeartSVG = ({ className }: HeartSVGProps) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -271,20 +244,17 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
   const hearts = useMemo(() => Array.from({ length: count }).map((_, i) => ({
     id: i,
     left: Math.random() * 100,
-    size: Math.random() * 20 + 8,
-    delay: Math.random() * 10,
-    duration: Math.random() * 10 + 10,
-    opacity: Math.random() * 0.3 + 0.1
+    size: Math.random() * 15 + 10,
+    delay: Math.random() * 5,
+    duration: Math.random() * 8 + 12,
   })), [count]);
-
   return (
-    <>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {hearts.map(h => (
-        <div key={h.id} className="absolute bottom-[-10%] animate-float pointer-events-none"
+        <div key={h.id} className="absolute bottom-[-5%] animate-float opacity-20"
           style={{
             left: `${h.left}%`,
             width: `${h.size}px`,
-            opacity: h.opacity,
             animationDelay: `${h.delay}s`,
             animationDuration: `${h.duration}s`,
             color: '#be123c'
@@ -296,12 +266,12 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
       <style>{`
         @keyframes float {
           0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-          20% { opacity: var(--tw-opacity); }
-          100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+          20% { opacity: 0.2; }
+          100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
         }
         .animate-float { animation: float linear infinite; }
       `}</style>
-    </>
+    </div>
   );
 };
 
@@ -312,117 +282,102 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     message: "I promise to love you more with every passing heartbeat.",
     images: []
   });
-
   const handleImage = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        if (ev.target?.result) {
-            setFormData(prev => ({ ...prev, images: [...prev.images, ev.target!.result as string] }));
+        if(ev.target?.result) {
+          setFormData(prev => ({ ...prev, images: [...prev.images, ev.target.result as string] }));
         }
       };
       reader.readAsDataURL(file);
     });
   };
-
   return (
-    <div className="min-h-screen bg-[#030712] flex items-center justify-center p-6 relative">
-      <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-[2.5rem] p-10 backdrop-blur-2xl shadow-2xl z-10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <HeartSVG className="w-32 h-32 text-rose-500" />
-        </div>
-        
-        <h2 className="text-3xl font-black text-white mb-8 tracking-tight">Create the Moment</h2>
-        
-        <div className="space-y-6">
+    <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 relative overflow-y-auto">
+      <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 md:p-10 backdrop-blur-2xl shadow-2xl my-8">
+        <h2 className="text-3xl font-black text-white mb-8 tracking-tight flex items-center gap-3">
+          Preparation <HeartSVG className="w-6 h-6 text-rose-600" />
+        </h2>
+        <div className="space-y-5">
           <div className="space-y-2">
             <label className="text-[10px] text-rose-400 font-bold uppercase tracking-widest px-2">Your Name</label>
-            <input 
-              type="text"
-              placeholder="Romeo"
-              className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-white/10"
-              value={formData.yourName} onChange={e => setFormData({...formData, yourName: e.target.value})}
-            />
+            <input type="text" placeholder="Romeo" className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-white/10" value={formData.yourName} onChange={e => setFormData({...formData, yourName: e.target.value})} />
           </div>
           <div className="space-y-2">
             <label className="text-[10px] text-rose-400 font-bold uppercase tracking-widest px-2">Partner's Name</label>
-            <input 
-              type="text"
-              placeholder="Juliet"
-              className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-white/10"
-              value={formData.partnerName} onChange={e => setFormData({...formData, partnerName: e.target.value})}
-            />
+            <input type="text" placeholder="Juliet" className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-white/10" value={formData.partnerName} onChange={e => setFormData({...formData, partnerName: e.target.value})} />
           </div>
           <div className="space-y-2">
             <label className="text-[10px] text-rose-400 font-bold uppercase tracking-widest px-2">Your Message</label>
-            <textarea 
-              className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white h-24 resize-none outline-none focus:ring-2 focus:ring-rose-500/50 transition-all"
-              value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})}
-            />
+            <textarea className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white h-24 resize-none outline-none focus:ring-2 focus:ring-rose-500/50 transition-all" value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} />
           </div>
-          
           <div className="space-y-2">
-            <label className="text-[10px] text-rose-400 font-bold uppercase tracking-widest px-2">Upload Memories (Pics)</label>
+            <label className="text-[10px] text-rose-400 font-bold uppercase tracking-widest px-2">Upload Memories</label>
             <div className="flex flex-wrap gap-2 py-2">
               {formData.images.map((img, i) => (
-                <img key={i} src={img} className="w-12 h-12 rounded-lg object-cover border border-rose-500/50" alt="" />
+                <div key={i} className="w-12 h-12 rounded-lg border border-rose-500/50 overflow-hidden bg-slate-900">
+                    <img src={img} className="w-full h-full object-cover" alt="" />
+                </div>
               ))}
               <label className="w-12 h-12 rounded-lg border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/5 transition-colors">
-                <span className="text-white/40 text-xl">+</span>
+                <span className="text-white/40 text-xl font-light">+</span>
                 <input type="file" multiple className="hidden" onChange={handleImage} />
               </label>
             </div>
           </div>
-
-          <button 
-            disabled={!formData.yourName || !formData.partnerName}
-            onClick={() => onStart(formData)}
-            className="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-5 rounded-2xl shadow-xl transition-all disabled:opacity-20 active:scale-95"
-          >
-            START THE PROPOSAL
-          </button>
+          <button disabled={!formData.yourName || !formData.partnerName} onClick={() => onStart(formData)} className="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-5 rounded-2xl shadow-xl transition-all disabled:opacity-20 active:scale-95 mt-4">LAUNCH PROPOSAL</button>
         </div>
       </div>
     </div>
   );
 };
 
-const LivingButton = ({ type, label, onClick, onCaught, isFinalState }: LivingButtonProps) => {
+const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount }: LivingButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [magneticOffset, setMagneticOffset] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [teleports, setTeleports] = useState(0);
   const [speech, setSpeech] = useState("");
   const [mode, setMode] = useState<string | null>(null); 
+  const [emotionCycle, setEmotionCycle] = useState(0);
   
   const isYes = type === 'yes';
-  const maxAttempts = 10;
+  const maxAttempts = 15;
+
+  useEffect(() => {
+    if (!isYes || isFinalState) return;
+    const interval = setInterval(() => {
+      setEmotionCycle(prev => (prev + 1) % 5);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isYes, isFinalState]);
 
   const triggerEvasion = () => {
     if (teleports >= maxAttempts) return;
     const modes = ['tiny', 'tornado', 'wind', 'ghost'];
     const currentMode = modes[teleports % modes.length];
-    const lines = ["Nope!", "🌪️ TORNADO!", "💨 Catch me!", "👻 Ghostly!", "Almost!", "Oof...", "Wait...", "I'm pooped...", "Okay fine."];
+    const lines = ["Nope!", "🌪️ TORNADO!", "💨 Catch me!", "👻 Ghostly!", "Almost!", "Oof...", "Wait...", "I'm pooped...", "Fine..."];
     setMode(currentMode);
     setSpeech(lines[Math.min(teleports, lines.length - 1)]);
     
     setTimeout(() => {
-      const padding = 120;
-      let tx, ty;
-      let valid = false;
-      let it = 0;
-      while (!valid && it < 50) {
-        tx = (Math.random() * (window.innerWidth - padding * 2)) + padding;
-        ty = (Math.random() * (window.innerHeight - padding * 2)) + padding;
-        const dx = Math.abs(tx - window.innerWidth / 2);
-        const dy = Math.abs(ty - window.innerHeight / 2);
-        if (dx > 200 || dy > 150) valid = true;
-        it++;
-      }
-      setPosition({ x: tx - (window.innerWidth / 2), y: ty - (window.innerHeight / 2) });
+      // SAFE ZONE CALCULATION: Prevent button from overlapping header (top 25%) or footer (bottom 20%)
+      const padding = 60;
+      const safeTop = window.innerHeight * 0.3;
+      const safeBottom = window.innerHeight * 0.8;
+      
+      let tx = (Math.random() * (window.innerWidth - padding * 3)) + padding;
+      let ty = (Math.random() * (safeBottom - safeTop)) + safeTop;
+
+      setPosition({ 
+        x: tx - (window.innerWidth / 2), 
+        y: ty - (window.innerHeight / 2) 
+      });
       setTeleports(t => t + 1);
       setTimeout(() => setMode(null), 300);
     }, 400);
@@ -435,11 +390,19 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState }: LivingBu
       const r = buttonRef.current.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
-      const angle = Math.atan2(e.clientY - cy, e.clientX - cx);
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const dist = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx);
+      
       setPupilPos({ x: Math.cos(angle) * 7, y: Math.sin(angle) * 7 });
-      if (!isYes) {
-        const evasionRadius = Math.max(80, 200 - (teleports * 8));
+
+      if (isYes) {
+        const pullRadius = 350;
+        const pull = Math.max(0, 1 - dist / pullRadius); 
+        setMagneticOffset({ x: Math.cos(angle) * 20 * pull, y: Math.sin(angle) * 20 * pull });
+      } else {
+        const evasionRadius = Math.max(100, 220 - (teleports * 10));
         if (dist < evasionRadius && teleports < maxAttempts) triggerEvasion();
       }
     };
@@ -449,25 +412,33 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState }: LivingBu
 
   const getMood = () => {
     if (isFinalState) return 'broken';
-    if (isYes) return isHovered ? 'excited' : 'happy';
+    if (isYes) {
+      if (isHovered) return 'heartEyes';
+      const yesMoods = ['happy', 'beaming', 'blushing', 'partying', 'kissing'];
+      return yesMoods[emotionCycle];
+    }
     if (teleports >= maxAttempts) return 'exhausted';
-    if (mode) return 'fear';
-    return teleports > 10 ? 'tired' : 'neutral';
+    if (mode) return 'astonished';
+    if (teleports > 12) return 'pensive';
+    if (teleports > 9) return 'pouting';
+    if (teleports > 6) return 'angry';
+    if (teleports > 3) return 'grimacing';
+    return isHovered ? 'thinking' : 'neutral';
   };
 
   return (
     <div 
-      className={`absolute top-1/2 left-1/2 transition-all duration-500 ease-out flex flex-col items-center pointer-events-auto z-20 
+      className={`absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex flex-col items-center pointer-events-auto z-40
         ${!isYes && teleports > 10 && teleports < maxAttempts ? 'animate-pant' : ''}`}
       style={{
-        transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px)) scale(${mode === 'tiny' ? 0.15 : 1})`,
-        marginLeft: isYes ? (position.x === 0 ? '-140px' : '0') : (position.x === 0 ? '140px' : '0'),
+        transform: `translate(calc(-50% + ${position.x + magneticOffset.x}px), calc(-50% + ${position.y + magneticOffset.y}px)) scale(${mode === 'tiny' ? 0.2 : 1})`,
+        marginLeft: isYes ? (position.x === 0 ? '-120px' : '0') : (position.x === 0 ? '120px' : '0'),
         opacity: mode === 'ghost' ? 0.2 : 1,
         cursor: (!isYes && teleports < maxAttempts) ? 'none' : 'pointer'
       }}
     >
-      {speech && (
-        <div className="mb-6 bg-white text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest animate-bounce shadow-xl">
+      {speech && !isFinalState && (
+        <div className="mb-4 bg-white text-black px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest animate-bounce shadow-xl">
           {speech}
         </div>
       )}
@@ -477,19 +448,19 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState }: LivingBu
         type="button"
         onClick={isYes ? onClick : (teleports >= maxAttempts ? onCaught : undefined)}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseLeave={() => { setIsHovered(false); setMagneticOffset({x:0, y:0}); }}
         className={`
-          relative flex flex-col items-center justify-center rounded-[3rem] w-48 h-36
-          transition-all duration-500 border-b-[10px] active:border-b-0 active:translate-y-2
-          ${isYes ? 'bg-emerald-500 border-emerald-700 shadow-[0_0_30px_rgba(16,185,129,0.3)]' : 'bg-rose-500 border-rose-700'}
-          ${isYes && isFinalState ? 'scale-[100] opacity-100 fixed inset-0 z-50 rounded-none' : ''}
+          relative flex flex-col items-center justify-center rounded-[2.5rem] w-40 h-32 md:w-48 md:h-36
+          transition-all duration-500 border-b-[8px] active:border-b-0 active:translate-y-2
+          ${isYes ? 'bg-emerald-500 border-emerald-700 shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-emerald-400/50' : 'bg-rose-500 border-rose-700'}
+          ${isYes && isFinalState ? 'scale-[120] opacity-100 fixed inset-0 z-[60] rounded-none !m-0 !translate-x-0 !translate-y-0' : ''}
         `}
       >
-        <div className={`flex gap-4 mb-4 scale-110 transition-opacity ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
+        <div className={`flex gap-3 mb-3 scale-110 md:scale-125 transition-all duration-300 ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
           <Eye pos={pupilPos} mood={getMood()} />
           <Eye pos={pupilPos} mood={getMood()} />
         </div>
-        <span className={`text-white font-black text-xl tracking-[0.2em] transition-opacity ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
+        <span className={`text-white font-black text-lg md:text-xl tracking-[0.2em] transition-opacity ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
           {label}
         </span>
       </button>
@@ -497,7 +468,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState }: LivingBu
       <style>{`
         @keyframes pant {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
+          50% { transform: translateY(-3px); }
         }
         .animate-pant { animation: pant 0.2s infinite; }
       `}</style>
@@ -506,22 +477,55 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState }: LivingBu
 };
 
 const Eye = ({ pos, mood }: EyeProps) => {
-  const moods: Record<string, { lid: string, p: number }> = {
-    happy: { lid: '0%', p: 1.2 },
-    excited: { lid: '0%', p: 1.8 },
-    fear: { lid: '0%', p: 0.5 },
-    tired: { lid: '40%', p: 0.8 },
-    exhausted: { lid: '70%', p: 0.6 },
-    broken: { lid: '100%', p: 0 },
-    neutral: { lid: '10%', p: 1 }
+  const moods: Record<string, any> = {
+    happy: { lid: '15%', p: 1.2, bg: 'bg-white', color: 'bg-slate-900', cheeks: true },
+    beaming: { lid: '-10%', p: 1.4, bg: 'bg-white', color: 'bg-slate-900', shine: true },
+    blushing: { lid: '25%', p: 1.1, bg: 'bg-rose-50', color: 'bg-slate-900', blush: true },
+    partying: { lid: '5%', p: 1.5, bg: 'bg-white', color: 'bg-slate-900', sparkle: true },
+    kissing: { lid: '35%', p: 1.0, bg: 'bg-white', color: 'bg-slate-900', kiss: true },
+    heartEyes: { lid: '0%', p: 1.0, bg: 'bg-white', showHearts: true },
+    angry: { lid: '-5%', p: 1.2, bg: 'bg-orange-100', color: 'bg-slate-900', brows: 'angry', steam: true },
+    pouting: { lid: '35%', p: 1.1, bg: 'bg-rose-100', color: 'bg-slate-900', brows: 'angry', blush: true },
+    pensive: { lid: '60%', p: 0.9, bg: 'bg-indigo-50', color: 'bg-slate-700', tear: true },
+    grimacing: { lid: '15%', p: 0.8, bg: 'bg-white', color: 'bg-slate-900', shake: true },
+    thinking: { lid: '20%', p: 1.2, bg: 'bg-white', color: 'bg-slate-900', brows: 'uneven' },
+    astonished: { lid: '-45%', p: 1.6, bg: 'bg-white', color: 'bg-slate-900', shock: true },
+    exhausted: { lid: '85%', p: 0.5, bg: 'bg-slate-200', color: 'bg-slate-500', sweat: true },
+    broken: { lid: '100%', p: 0, bg: 'bg-slate-900' },
+    neutral: { lid: '25%', p: 1, bg: 'bg-white', color: 'bg-slate-900' }
   };
+  
   const m = moods[mood] || moods.neutral;
 
   return (
-    <div className="w-10 h-10 bg-white rounded-full overflow-hidden relative shadow-inner">
-      <div className="w-5 h-5 bg-slate-900 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-75"
-           style={{ transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) scale(${m.p})` }} />
-      <div className="absolute top-0 left-0 w-full bg-slate-800 transition-all duration-500" style={{ height: m.lid }} />
+    <div className={`w-8 h-8 md:w-10 md:h-10 ${m.bg} rounded-full overflow-hidden relative shadow-inner flex items-center justify-center transition-all duration-500 ${m.shake ? 'animate-bounce' : ''}`}>
+      {m.brows === 'angry' && (
+        <div className="absolute top-1 left-0 w-full flex justify-around px-1 z-30">
+          <div className="w-3 h-0.5 md:w-4 md:h-1 bg-slate-900 rounded-full rotate-12 -translate-y-1" />
+          <div className="w-3 h-0.5 md:w-4 md:h-1 bg-slate-900 rounded-full -rotate-12 -translate-y-1" />
+        </div>
+      )}
+      {m.brows === 'uneven' && (
+        <div className="absolute top-1 left-0 w-full flex justify-around px-1 z-30">
+          <div className="w-3 h-0.5 md:w-4 md:h-1 bg-slate-900 rounded-full -rotate-6" />
+          <div className="w-3 h-0.5 md:w-4 md:h-1 bg-slate-900 rounded-full -translate-y-1" />
+        </div>
+      )}
+      {m.showHearts ? (
+        <HeartSVG className="w-6 h-6 md:w-8 md:h-8 text-rose-500 animate-pulse" />
+      ) : (
+        <div 
+          className={`w-4 h-4 md:w-5 md:h-5 ${m.color} rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-150`}
+          style={{ transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) scale(${m.p})` }} 
+        >
+          {m.shock && <div className="absolute inset-0 bg-white/20 rounded-full animate-ping" />}
+          <div className="absolute top-0.5 right-0.5 w-1 h-1 md:w-1.5 md:h-1.5 bg-white rounded-full opacity-60" />
+        </div>
+      )}
+      <div className="absolute top-0 left-0 w-full bg-slate-800 transition-all duration-300" style={{ height: m.lid }} />
+      {m.blush && <div className="absolute bottom-0 inset-x-0 h-2 md:h-3 bg-rose-400/30 blur-sm animate-pulse" />}
+      {m.tear && <div className="absolute bottom-1 left-2 w-1 h-1 md:w-1.5 md:h-1.5 bg-blue-400 rounded-full animate-bounce" />}
+      {m.sweat && <div className="absolute top-1 right-1 w-1.5 h-1.5 md:w-2 md:h-2 bg-cyan-200 rounded-full blur-[1px] animate-pulse" />}
     </div>
   );
 };
