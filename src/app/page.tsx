@@ -554,6 +554,58 @@ const ParticleExplosion = ({ particle, accent }: { particle: string; accent: str
     );
 };
 
+const BeatingHeartCanvas = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Re-creating the SVG path as a Path2D object.
+  const heartPath = useMemo(() => new Path2D("M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"), []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    
+    const animate = (time: number) => {
+      if (!ctx || !canvas) return;
+      
+      // A curve that creates a sharp "beat" similar to a heartbeat ECG.
+      const beat = 1 + 0.2 * Math.pow(Math.sin(time / 250), 10);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ef4444'; // Tailwind's rose-500
+      
+      ctx.save();
+      
+      // Center the drawing in the canvas
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      
+      // Scale the heart. The SVG is 24x24, we want it to be ~32px.
+      // Canvas is 40x40, so we scale it up but leave some padding.
+      const baseScale = (canvas.width / 24) * 0.8; 
+      ctx.scale(baseScale * beat, baseScale * beat);
+      
+      // The SVG path coordinates are not centered, so we translate to center the 24x24 box.
+      ctx.translate(-12, -12); 
+      
+      ctx.fill(heartPath);
+      ctx.restore();
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [heartPath]);
+
+  // Using a 40x40 canvas to provide some padding for the 32x32 (w-8, h-8) heart.
+  return <canvas ref={canvasRef} width={40} height={40} />;
+};
+
 const LoveOdyssey = ({ 
   userImages, 
   partnerName, 
@@ -616,7 +668,7 @@ const LoveOdyssey = ({
   const caption = currentImage.caption || defaultCaptions[currentIndex % defaultCaptions.length];
 
   return (
-    <div className="fixed inset-0 bg-[#020617] flex items-center justify-center overflow-hidden z-[100] p-4 font-sans">
+    <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center overflow-hidden z-[100] p-4 font-sans">
       <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
         <img src={displayImages[currentIndex].src} className="w-full h-full object-cover" alt="" />
       </div>
@@ -655,21 +707,14 @@ const LoveOdyssey = ({
               "{caption}"
             </p>
             <div className="mt-4 flex justify-center">
-               <HeartSVG className="w-8 h-8 text-rose-500 animate-heartbeat" />
+               <BeatingHeartCanvas />
             </div>
           </div>
         )}
       </div>
 
       <style>{`
-        @keyframes heartbeat {
-          0% { transform: scale(1); }
-          14% { transform: scale(1.3); }
-          28% { transform: scale(1); }
-          42% { transform: scale(1.3); }
-          70% { transform: scale(1); }
-        }
-        .animate-heartbeat { animation: heartbeat 1.5s infinite; }
+        /* Heartbeat animation is now handled by the canvas component */
       `}</style>
     </div>
   );
