@@ -377,7 +377,6 @@ const LivingButton = ({ type, label, onClick, onCaught, isBroken, isFinalState }
   const [isHovered, setIsHovered] = useState(false);
   const [teleports, setTeleports] = useState(0);
   const [speech, setSpeech] = useState("");
-  const [isFearful, setIsFearful] = useState(false);
   const maxTeleports = 12;
 
   const isYes = type === 'yes';
@@ -388,14 +387,17 @@ const LivingButton = ({ type, label, onClick, onCaught, isBroken, isFinalState }
     const forbiddenWidth = 400; // Buffer area around YES button
     const forbiddenHeight = 300;
     
+    const availableWidth = window.innerWidth - padding * 2;
+    const availableHeight = window.innerHeight - padding * 2;
+    
     let targetX, targetY;
     let isTooClose = true;
     let attempts = 0;
 
     // Keep trying until we are away from the center (where YES sits)
     while (isTooClose && attempts < 50) {
-      targetX = (Math.random() * (window.innerWidth - padding * 2)) + padding;
-      targetY = (Math.random() * (window.innerHeight - padding * 2)) + padding;
+      targetX = (Math.random() * availableWidth) + padding;
+      targetY = (Math.random() * availableHeight) + padding;
       
       const screenCenterX = window.innerWidth / 2;
       const screenCenterY = window.innerHeight / 2;
@@ -430,41 +432,43 @@ const LivingButton = ({ type, label, onClick, onCaught, isBroken, isFinalState }
       const angle = Math.atan2(dy, dx);
       const eyeDist = Math.min(dist / 15, 8);
       setPupilPos({ x: Math.cos(angle) * eyeDist, y: Math.sin(angle) * eyeDist });
-
-      if (!isYes) {
-        setIsFearful(dist < 260);
-
-        if (dist < 180 && teleports < maxTeleports) {
-          setPosition(getRandomPosition());
-          setTeleports(t => t + 1);
-          setSpeech([
-            "Wait!", "Too fast!", "No please!", "Hey!", 
-            "Almost!", "Leave me!", "I'm shy!", "Catch me!",
-            "Over here!", "Nope!", "Can't touch this!", "Try again!"
-          ][teleports % 12]);
-        } else if (dist < 120 && teleports >= maxTeleports) {
-          setSpeech("Okay, you win...");
-        } else if (dist >= 300) {
-          setSpeech("");
-        }
-      } else {
-        if (dist < 200) {
-          setSpeech("Click Me!");
-        } else {
-          setSpeech("");
-        }
-      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [teleports, isFinalState, isYes]);
+  }, [isFinalState]);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (isYes) {
+      setSpeech("Click Me!");
+    } else { // It's the 'no' button
+      if (teleports < maxTeleports) {
+        setPosition(getRandomPosition());
+        setTeleports(t => t + 1);
+        setSpeech([
+          "Wait!", "Too fast!", "No please!", "Hey!", 
+          "Almost!", "Leave me!", "I'm shy!", "Catch me!",
+          "Over here!", "Nope!", "Can't touch this!", "Try again!"
+        ][teleports % 12]);
+      } else {
+        setSpeech("Okay, you win...");
+      }
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    // Don't clear speech if the button is 'surrendered'
+    if (teleports < maxTeleports || isYes) {
+      setSpeech("");
+    }
+  };
 
   const getMood = () => {
     if (isYes) return isHovered ? 'excited' : 'happy';
     if (isFinalState) return 'broken';
     if (!isYes && teleports >= maxTeleports) return 'sad';
-    if (!isYes && isFearful) return 'fear';
     if (speech) return 'surprised';
     return 'neutral';
   };
@@ -486,8 +490,8 @@ const LivingButton = ({ type, label, onClick, onCaught, isBroken, isFinalState }
       <button
         ref={buttonRef}
         onClick={isYes ? onClick : (teleports >= maxTeleports ? onCaught : undefined)}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className={`
           relative flex flex-col items-center justify-center p-8 rounded-[3.5rem]
           transition-all duration-500 border-b-[12px] active:border-b-0 active:translate-y-2
