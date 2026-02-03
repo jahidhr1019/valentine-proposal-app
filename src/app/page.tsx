@@ -846,9 +846,9 @@ const LivingButton = ({
         const nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
         const ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
 
-        const currentNoButtonScale = noButtonScale ?? 1;
-        const noButtonWidth = noButton.offsetWidth * currentNoButtonScale;
-        const noButtonHeight = noButton.offsetHeight * currentNoButtonScale;
+        const noButtonRect = noButton.getBoundingClientRect();
+        const noButtonWidth = noButtonRect.width;
+        const noButtonHeight = noButtonRect.height;
 
         const futureNoRect = {
             left: window.innerWidth / 2 + nx - noButtonWidth / 2,
