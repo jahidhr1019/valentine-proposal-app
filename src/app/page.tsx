@@ -146,16 +146,6 @@ export default function Home() {
         .animate-gradient-x {
           animation: gradient-x 4s ease infinite;
         }
-        @keyframes shiver {
-          0% { transform: translate(0, 0); }
-          25% { transform: translate(3px, -3px); }
-          50% { transform: translate(-3px, 3px); }
-          75% { transform: translate(3px, 3px); }
-          100% { transform: translate(0, 0); }
-        }
-        .animate-shiver {
-          animation: shiver 0.08s linear infinite;
-        }
         @keyframes twinkle {
           0%, 100% { opacity: 0.1; transform: scale(1); }
           50% { opacity: 1; transform: scale(1.5); }
@@ -481,7 +471,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isBroken, isFinalState }
 
   return (
     <div 
-      className={`absolute top-1/2 left-1/2 transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] flex flex-col items-center z-20 ${!isYes && isFearful && !isFinalState ? 'animate-shiver' : ''}`}
+      className="absolute top-1/2 left-1/2 transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] flex flex-col items-center z-20"
       style={{
         transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`,
         marginLeft: isYes ? (position.x === 0 ? '-140px' : '0') : (position.x === 0 ? '140px' : '0'),
