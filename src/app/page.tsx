@@ -912,18 +912,12 @@ const LivingButton = ({
     return () => window.removeEventListener('mousemove', handleMove);
   }, [mode, isYes, isFinalState, noButtonScale, isHeartbroken]);
 
-  const handleNoClick = (e: MouseEvent) => {
-    if (onCaught) {
-      onCaught(e);
-    }
-    triggerEvasion();
-  };
-
   return (
     <button
       id={id}
       ref={buttonRef}
-      onClick={isYes ? onClick : handleNoClick}
+      onClick={isYes ? onClick : onCaught}
+      onMouseEnter={!isYes ? triggerEvasion : undefined}
       style={{
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
                     calc(-50% + ${position.y + dynamicOffset.y}px)) 
