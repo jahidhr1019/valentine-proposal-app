@@ -634,12 +634,16 @@ const LivingButton = ({
   const [dynamicOffset, setDynamicOffset] = useState({ x: 0, y: 0 });
   const [mode, setMode] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [isShy, setIsShy] = useState(false);
 
   const isYes = type === 'yes';
 
   const getMood = () => {
     if (isFinalState) return 'partying';
-    if (isYes) return 'beaming';
+    if (isYes) {
+      if (isShy) return 'blushing';
+      return 'beaming';
+    }
     if (isPaused) return 'exhausted';
     if (rejectionCount > 3) return 'pensive';
     if (mode === 'glitch') return 'grimacing';
@@ -684,9 +688,11 @@ const LivingButton = ({
 
       if (isYes) {
         if (dist < 150) {
-          const push = (150 - dist) * 0.2;
+          setIsShy(true);
+          const push = (150 - dist) * 0.4;
           setDynamicOffset({ x: -Math.cos(angle) * push, y: -Math.sin(angle) * push });
         } else {
+          setIsShy(false);
           setDynamicOffset({ x: 0, y: 0 });
         }
       } else {
@@ -711,7 +717,7 @@ const LivingButton = ({
 
     window.addEventListener('mousemove', handleMove as any);
     return () => window.removeEventListener('mousemove', handleMove as any);
-  }, [mode, isYes, isFinalState, isPaused, rejectionCount]);
+  }, [mode, isYes, isFinalState, isPaused, rejectionCount, isShy]);
 
 
   const triggerEvasion = (force = false) => {
@@ -766,3 +772,4 @@ const LivingButton = ({
     </button>
   );
 };
+```
