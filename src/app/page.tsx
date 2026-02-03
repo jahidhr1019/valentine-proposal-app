@@ -124,7 +124,7 @@ export default function Home() {
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentTheme.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentTheme.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
-        <FloatingHearts count={50} />
+        <FloatingHearts count={150} />
       </div>
 
       <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
@@ -640,11 +640,12 @@ const LivingButton = ({
   const [dynamicOffset, setDynamicOffset] = useState({ x: 0, y: 0 });
   const [mode, setMode] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [evasionCount, setEvasionCount] = useState(0);
 
   const isYes = type === 'yes';
 
   const checkOverlap = (rectA: DOMRect, rectB: DOMRect) => {
-      const buffer = 30; // A little extra padding
+      const buffer = 30;
       return !(
           rectA.right < rectB.left - buffer ||
           rectA.left > rectB.right + buffer ||
@@ -664,21 +665,31 @@ const LivingButton = ({
   };
 
   const triggerEvasion = useCallback(() => {
-    if (isYes || isPaused || isFinalState) return;
+    if (isYes || isPaused || isFinalState || mode) return;
     
+    const newEvasionCount = evasionCount + 1;
+    setEvasionCount(newEvasionCount);
+
+    if (newEvasionCount % 3 === 0) {
+        setIsPaused(true);
+        setTimeout(() => {
+            setIsPaused(false);
+        }, 500);
+    }
+
     const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
     const tactic = tactics[Math.floor(Math.random() * tactics.length)];
     setMode(tactic);
 
-    const yesButton = document.getElementById('yes-button');
     const noButton = buttonRef.current;
+    const yesButton = document.getElementById('yes-button');
 
-    if (!noButton) return;
+    if (!noButton || !yesButton) return;
 
     let nx, ny;
     let attempts = 0;
     const maxAttempts = 20;
-
+    
     do {
       const padding = 120;
       nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
@@ -695,20 +706,18 @@ const LivingButton = ({
         height: noButtonHeight,
       } as DOMRect;
 
-      const yesRect = yesButton?.getBoundingClientRect();
+      const yesRect = yesButton.getBoundingClientRect();
 
-      if (!yesRect || !checkOverlap(futureNoRect, yesRect)) {
+      if (!checkOverlap(futureNoRect, yesRect)) {
         break;
       }
-
       attempts++;
     } while (attempts < maxAttempts);
-
 
     setPosition({ x: nx, y: ny });
 
     setTimeout(() => setMode(null), 1000);
-  }, [isYes, isPaused, isFinalState]);
+  }, [isYes, isPaused, isFinalState, evasionCount, mode]);
 
   useEffect(() => {
     const handleMove = (e: any) => {
@@ -752,7 +761,7 @@ const LivingButton = ({
 
   const handleNoClick = () => {
     onCaught?.();
-    triggerEvasion();
+    setEvasionCount(0);
   };
 
   return (
@@ -760,6 +769,7 @@ const LivingButton = ({
       id={id}
       ref={buttonRef}
       onClick={isYes ? onClick : handleNoClick}
+      onMouseEnter={!isYes ? triggerEvasion : undefined}
       style={{
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
                     calc(-50% + ${position.y + dynamicOffset.y}px)) 
