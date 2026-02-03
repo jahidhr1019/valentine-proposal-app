@@ -104,7 +104,7 @@ export default function Home() {
     return (
       <LoveOdyssey 
         userImages={setupData.images} 
-        customMessage={setupData.message}
+        customMessage={setupData.message || "Will you be my Valentine?"}
         partnerName={setupData.partnerName}
         yourName={setupData.yourName}
       />
@@ -135,7 +135,7 @@ export default function Home() {
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentTheme.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentTheme.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
-        <FloatingHearts count={150} />
+        <FloatingHearts count={250} />
       </div>
 
       <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
@@ -577,7 +577,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
               <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">The Final Note (Optional)</label>
               <textarea 
                 className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white h-24 resize-none outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
-                placeholder="Write a message for when they click 'YES'..." 
+                placeholder="What is it, yes or no?" 
                 value={formData.message} 
                 onChange={e => setFormData({...formData, message: e.target.value})} 
               />
@@ -758,16 +758,15 @@ const LivingButton = ({
   const triggerEvasion = useCallback(() => {
     if (isYes || isPaused || isFinalState || mode) return;
 
-    if (rejectionCount && rejectionCount % 5 === 0) {
+    if (rejectionCount && rejectionCount > 0 && rejectionCount % 5 === 0 && evasionCount < 5) {
         setIsPaused(true);
         setTimeout(() => {
             setIsPaused(false);
-            setEvasionCount(0); // Reset count after pause
         }, 1000);
         return; 
     }
     
-    setEvasionCount(prev => prev + 1);
+    setEvasionCount(prev => (prev + 1) % 5);
 
     const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
     const tactic = tactics[Math.floor(Math.random() * tactics.length)];
@@ -859,17 +858,12 @@ const LivingButton = ({
     return () => window.removeEventListener('mousemove', handleMove);
   }, [mode, isYes, isFinalState, noButtonScale, triggerEvasion, isPaused]);
 
-  const handleNoClick = () => {
-    if(onCaught) onCaught();
-    triggerEvasion();
-  };
-
   return (
     <button
       id={id}
       ref={buttonRef}
-      onClick={isYes ? onClick : (isPaused ? onCaught : undefined)}
-      onMouseEnter={!isYes && !isPaused ? triggerEvasion : undefined}
+      onClick={isYes ? onClick : onCaught}
+      onMouseEnter={!isYes && !isPaused && evasionCount < 5 ? triggerEvasion : undefined}
       style={{
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
                     calc(-50% + ${position.y + dynamicOffset.y}px)) 
