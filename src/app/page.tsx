@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo, MouseEvent } from 'react';
+import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback } from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -653,10 +653,9 @@ const LivingButton = ({
       );
   };
 
-  // Determine eye expression based on current behavior
   const getMood = () => {
     if (isFinalState) return 'partying';
-    if (isYes) return 'beaming';
+    if (isYes) return 'blushing';
     if (isPaused) return 'exhausted';
     if (mode === 'glitch') return 'grimacing';
     if (mode === 'tornado') return 'astonished';
@@ -664,10 +663,9 @@ const LivingButton = ({
     return 'neutral';
   };
 
-  const triggerEvasion = () => {
+  const triggerEvasion = useCallback(() => {
     if (isYes || isPaused || isFinalState) return;
     
-    // Choose one of your custom behaviors
     const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
     const tactic = tactics[Math.floor(Math.random() * tactics.length)];
     setMode(tactic);
@@ -686,7 +684,6 @@ const LivingButton = ({
       nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
       ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
 
-      // Estimate the "No" button's future bounding box
       const noButtonWidth = noButton.offsetWidth;
       const noButtonHeight = noButton.offsetHeight;
       const futureNoRect = {
@@ -700,7 +697,6 @@ const LivingButton = ({
 
       const yesRect = yesButton?.getBoundingClientRect();
 
-      // If the "Yes" button isn't found, or if there's no overlap, we've found a good spot.
       if (!yesRect || !checkOverlap(futureNoRect, yesRect)) {
         break;
       }
@@ -711,9 +707,8 @@ const LivingButton = ({
 
     setPosition({ x: nx, y: ny });
 
-    // Reset the visual effect after 1 second
     setTimeout(() => setMode(null), 1000);
-  };
+  }, [isYes, isPaused, isFinalState]);
 
   useEffect(() => {
     const handleMove = (e: any) => {
@@ -727,12 +722,9 @@ const LivingButton = ({
       const dist = Math.hypot(dx, dy);
       const angle = Math.atan2(dy, dx);
 
-      // Make eyes track the mouse cursor
       setPupilPos({ x: Math.cos(angle) * 6, y: Math.sin(angle) * 6 });
 
-      // Live physics behaviors
       if (isYes) {
-        // "Social Butterfly": Slides away gently if the mouse gets too close
         if (dist < 150) {
           const push = (150 - dist) * 0.15;
           setDynamicOffset({ x: -Math.cos(angle) * push, y: -Math.sin(angle) * push });
@@ -740,30 +732,34 @@ const LivingButton = ({
           setDynamicOffset({ x: 0, y: 0 });
         }
       } else {
-        // "Newton" Repulsion force field
         if (mode === 'newton' && dist < 250) {
-          const force = (250 - dist) * 0.4;
+          const force = (250 - dist) * 0.4 / noButtonScale;
           setDynamicOffset({ x: -Math.cos(angle) * force, y: -Math.sin(angle) * force });
         }
-        // "Black Hole" Attraction (that slips away)
-        if (mode === 'blackhole' && dist < 300) {
-          const force = (300 - dist) * 0.3;
+        else if (mode === 'blackhole' && dist < 300) {
+          const force = (300 - dist) * 0.3 / noButtonScale;
           setDynamicOffset({ x: Math.cos(angle) * force, y: Math.sin(angle) * force });
           if (dist < 45) triggerEvasion(); 
+        } else {
+          setDynamicOffset({x: 0, y: 0});
         }
       }
     };
 
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [mode, isYes, isFinalState, triggerEvasion]);
+  }, [mode, isYes, isFinalState, noButtonScale, triggerEvasion]);
+
+  const handleNoClick = () => {
+    onCaught?.();
+    triggerEvasion();
+  };
 
   return (
     <button
       id={id}
       ref={buttonRef}
-      onClick={isYes ? onClick : onCaught}
-      onMouseEnter={!isYes ? triggerEvasion : undefined}
+      onClick={isYes ? onClick : handleNoClick}
       style={{
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
                     calc(-50% + ${position.y + dynamicOffset.y}px)) 
@@ -772,7 +768,6 @@ const LivingButton = ({
       className={cn(
         "absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl z-50",
         isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-100 border-slate-300 text-slate-800",
-        // Map modes to Tailwind animations/transforms
         mode === 'tornado' && "animate-spin",
         mode === 'ghost' && "opacity-20 blur-sm scale-125",
         mode === 'tiny' && "scale-0 opacity-0",
