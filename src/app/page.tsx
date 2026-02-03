@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Heart } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -54,6 +55,16 @@ type HeartSVGProps = {
 type FloatingHeartsProps = {
   count: number;
 };
+
+// Functions to safely encode and decode Unicode strings to/from Base64
+function utoa(str: string): string {
+    return window.btoa(unescape(encodeURIComponent(str)));
+}
+
+function atou(str: string): string {
+    return decodeURIComponent(escape(window.atob(str)));
+}
+
 
 const themeConfigs = {
   romantic: {
@@ -262,7 +273,43 @@ const celebrationThemes = {
 };
 
 
-export default function Home() {
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="fixed inset-0 bg-[#030712] flex items-center justify-center text-white font-headline">
+        Loading Proposal...
+      </div>
+    }>
+      <Home />
+    </Suspense>
+  );
+}
+
+function Home() {
+  const searchParams = useSearchParams();
+  const [initialData, setInitialData] = useState<SetupData | null>(null);
+  const [isParsingUrl, setIsParsingUrl] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const dataParam = searchParams.get('data');
+    if (dataParam) {
+      try {
+        const decodedJson = atou(dataParam);
+        const parsedData = JSON.parse(decodedJson);
+        setInitialData(parsedData);
+      } catch (error) {
+        console.error("Failed to parse proposal data from URL:", error);
+        toast({
+          variant: "destructive",
+          title: "Invalid Link",
+          description: "This proposal link appears to be broken.",
+        });
+      }
+    }
+    setIsParsingUrl(false);
+  }, [searchParams, toast]);
+
   const [setupData, setSetupData] = useState<SetupData>({
     yourName: '',
     partnerName: '',
@@ -278,6 +325,12 @@ export default function Home() {
   const [yesButtonScale, setYesButtonScale] = useState(1);
   const [noButtonScale, setNoButtonScale] = useState(1);
   const [isHeartbroken, setIsHeartbroken] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      handleStart(initialData);
+    }
+  }, [initialData]);
 
   const handleStart = (data: SetupData) => {
     setSetupData(data);
@@ -309,6 +362,14 @@ export default function Home() {
         setShowSuccess(true);
     }, 800 + 3000);
   };
+  
+  if (isParsingUrl) {
+    return (
+      <div className="fixed inset-0 bg-[#030712] flex items-center justify-center text-white font-headline">
+        Unsealing Envelope...
+      </div>
+    );
+  }
   
   if (!isStarted) {
     return <SetupPage onStart={handleStart} />;
@@ -838,6 +899,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
   const [generatingCaptionIndex, setGeneratingCaptionIndex] = useState<number | null>(null);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -894,6 +956,94 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   };
 
   const isFormValid = formData.yourName && formData.partnerName;
+
+  const handleGenerateLink = () => {
+    if (!isFormValid) return;
+    try {
+      const jsonString = JSON.stringify(formData);
+      const encodedData = utoa(jsonString);
+      const link = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+      setGeneratedLink(link);
+    } catch (e) {
+      console.error(e);
+      toast({
+        variant: "destructive",
+        title: "Error Generating Link",
+        description: "There was a problem creating your shareable link."
+      });
+    }
+  };
+
+  const copyLinkToClipboard = () => {
+    if (!generatedLink) return;
+    navigator.clipboard.writeText(generatedLink);
+    toast({
+      title: "Link Copied!",
+      description: "You can now send the proposal to your loved one."
+    });
+  };
+  
+  if (generatedLink) {
+    return (
+      <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden relative">
+        {mounted && <FloatingBackground />}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-900/10 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[120px] animate-pulse delay-700" />
+        </div>
+
+        <div className="relative w-full max-w-xl z-10">
+          <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[3rem] p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden group animate-in fade-in-0 zoom-in-95 duration-500">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30">
+                <HeartSVG className="w-8 h-8 text-rose-500" />
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">Your Link is Ready</h1>
+              <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">Send it to your loved one</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Shareable Link</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    readOnly
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white/50 outline-none placeholder:text-white/10 text-sm"
+                    value={generatedLink} 
+                  />
+                  <button 
+                    onClick={copyLinkToClipboard}
+                    className="shrink-0 bg-white/10 text-white rounded-2xl px-6 font-bold text-sm hover:bg-white/20 active:scale-95 transition-all"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => onStart(formData)}
+                className="w-full group/btn relative overflow-hidden py-6 rounded-2xl md:rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500 bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95"
+              >
+                <div className="relative z-10 flex items-center justify-center gap-3">
+                  Preview Proposal
+                  <HeartSVG className="w-4 h-4 group-hover/btn:scale-125 transition-transform" />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
+              </button>
+
+              <button 
+                onClick={() => setGeneratedLink(null)}
+                className="w-full py-4 rounded-2xl text-[11px] uppercase font-bold tracking-widest text-white/40 hover:text-white/60 hover:bg-white/5 transition-all"
+              >
+                Create a New Proposal
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden relative">
@@ -1006,7 +1156,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
 
             <button 
               disabled={!isFormValid}
-              onClick={() => onStart(formData)}
+              onClick={handleGenerateLink}
               className={`w-full group/btn relative overflow-hidden py-6 rounded-2xl md:rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500
                 ${isFormValid 
                   ? 'bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95' 
@@ -1014,7 +1164,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
                 }`}
             >
               <div className="relative z-10 flex items-center justify-center gap-3">
-                {isFormValid ? "Begin Love Odyssey" : "Complete Names to Start"}
+                {isFormValid ? "Generate Sharable Link" : "Complete Names to Start"}
                 {isFormValid && <HeartSVG className="w-4 h-4 group-hover/btn:scale-125 transition-transform" />}
               </div>
               {isFormValid && (
