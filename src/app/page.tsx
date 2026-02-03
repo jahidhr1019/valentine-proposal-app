@@ -656,7 +656,9 @@ const LivingButton = ({
 
   const getMood = () => {
     if (isFinalState) return 'partying';
-    if (isYes) return 'blushing';
+    if (isYes) {
+        return (dynamicOffset.x !== 0 || dynamicOffset.y !== 0) ? 'blushing' : 'beaming';
+    }
     if (isPaused) return 'exhausted';
     if (mode === 'glitch') return 'grimacing';
     if (mode === 'tornado') return 'astonished';
@@ -670,11 +672,11 @@ const LivingButton = ({
     const newEvasionCount = evasionCount + 1;
     setEvasionCount(newEvasionCount);
 
-    if (newEvasionCount % 3 === 0) {
+    if (newEvasionCount % 5 === 0) {
         setIsPaused(true);
         setTimeout(() => {
             setIsPaused(false);
-        }, 500);
+        }, 1000);
     }
 
     const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
