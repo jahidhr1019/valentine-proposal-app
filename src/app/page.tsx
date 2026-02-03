@@ -691,7 +691,7 @@ const LoveOdyssey = ({
     }
     const { placeholderImages } = placeholderImagesData;
     return placeholderImages.map(p => ({
-        src: `https://picsum.photos/seed/${p.seedId}/${p.width}/${p.height}`,
+        src: `https://source.unsplash.com/${p.width}x${p.height}/?${p.hint.replace(/ /g, ',')}`,
         caption: "",
         "data-ai-hint": p.hint,
     }));
