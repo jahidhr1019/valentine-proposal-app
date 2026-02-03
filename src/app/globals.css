@@ -40,25 +40,33 @@
     --radius: 0.5rem;
   }
   .dark {
-    --background: 25 20% 10%;
-    --foreground: 27 100% 95%;
-    --card: 25 20% 12%;
-    --card-foreground: 27 100% 95%;
-    --popover: 25 20% 10%;
-    --popover-foreground: 27 100% 95%;
-    --primary: 1 73% 81%;
-    --primary-foreground: 0 20% 15%;
-    --secondary: 240 30% 20%;
-    --secondary-foreground: 240 60% 97%;
-    --muted: 240 30% 25%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 240 30% 22%;
-    --accent-foreground: 240 60% 97%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 30% 25%;
-    --input: 240 30% 25%;
-    --ring: 1 73% 81%;
+    --background: 222 84% 5%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 84% 5%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 349 83% 61%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 349 83% 61%;
   }
 }
 
@@ -71,13 +79,12 @@
   }
 }
 
-@keyframes float {
-  0% {
-    transform: translateY(0px) translateX(0px) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-1000px) translateX(100px) rotate(360deg);
-    opacity: 0;
-  }
+@keyframes float-heart {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  20% { opacity: 0.2; }
+  100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+}
+
+.animate-float-heart {
+  animation: float-heart linear infinite;
 }

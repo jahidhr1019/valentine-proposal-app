@@ -7,7 +7,7 @@ import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import SetupForm from '@/components/app/SetupForm';
 import Proposal from '@/components/app/Proposal';
 import PhotoRally from '@/components/app/PhotoRally';
-import FloatingPetals from '@/components/app/FloatingPetals';
+import FloatingHearts from '@/components/app/FloatingHearts';
 
 type AppState = 'SETUP' | 'PROPOSAL' | 'RALLY';
 
@@ -41,7 +41,11 @@ export default function Home() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
-      <FloatingPetals />
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-600/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-pink-600/20 rounded-full blur-[120px] animate-pulse delay-1000" />
+        <FloatingHearts count={15} />
+      </div>
       <div className="z-10 w-full max-w-4xl">
         {renderContent()}
       </div>
