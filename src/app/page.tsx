@@ -324,13 +324,20 @@ const LoveOdyssey = ({
 
 
 const FloatingHearts = ({ count }: FloatingHeartsProps) => {
-  const hearts = useMemo(() => Array.from({ length: count }).map((_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    size: Math.random() * 15 + 10,
-    delay: Math.random() * 5,
-    duration: Math.random() * 8 + 12,
-  })), [count]);
+  const [hearts, setHearts] = useState<any[]>([]);
+
+  useEffect(() => {
+    setHearts(
+      Array.from({ length: count }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        size: Math.random() * 15 + 10,
+        delay: Math.random() * 5,
+        duration: Math.random() * 8 + 12,
+      }))
+    );
+  }, [count]);
+
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {hearts.map(h => (
@@ -359,14 +366,18 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
 };
 
 const FloatingBackground = () => {
-  const hearts = useMemo(() => Array.from({ length: 20 }).map((_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    size: Math.random() * 20 + 10,
-    delay: Math.random() * 10,
-    duration: Math.random() * 15 + 10,
-    opacity: Math.random() * 0.3 + 0.05
-  })), []);
+  const [hearts, setHearts] = useState<any[]>([]);
+
+  useEffect(() => {
+    setHearts(Array.from({ length: 20 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      size: Math.random() * 20 + 10,
+      delay: Math.random() * 10,
+      duration: Math.random() * 15 + 10,
+      opacity: Math.random() * 0.3 + 0.05
+    })))
+  }, []);
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -744,8 +755,8 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
   );
 };
 
-const Eye = ({ pos, mood }: EyeProps) => {
-  const moods: Record<string, any> = {
+const Eye = ({ pos, mood }) => {
+  const moods = {
     happy: { lid: '15%', p: 1.2, bg: 'bg-white', color: 'bg-slate-900', cheeks: true },
     beaming: { lid: '-10%', p: 1.4, bg: 'bg-white', color: 'bg-slate-900', shine: true },
     blushing: { lid: '25%', p: 1.1, bg: 'bg-rose-50', color: 'bg-slate-900', blush: true },
