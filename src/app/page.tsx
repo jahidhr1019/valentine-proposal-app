@@ -355,9 +355,6 @@ export default function Home() {
             {isHeartbroken ? "Is this really goodbye?" : proposalMessage}
           </span>
         </h1>
-        <p className={cn("font-bold tracking-[0.4em] uppercase text-[10px]", currentThemeConfig.proposalByColor, currentThemeConfig.font)}>
-          A Digital Proposal by {you}
-        </p>
       </div>
 
       <div className="absolute inset-0 z-40">
@@ -387,15 +384,6 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={`absolute bottom-12 z-50 pointer-events-none transition-opacity duration-500 ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
-          <div className="px-6 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
-            <div className="text-rose-400 font-bold text-[9px] tracking-[0.4em] uppercase flex items-center gap-3">
-              {rejectionCount === 0 ? "Chase the heart" : `Attempt ${rejectionCount}`}
-              {rejectionCount > 3 && <span className="text-white/40 animate-pulse">Running out of breath...</span>}
-            </div>
-          </div>
-      </div>
-      
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&family=Special+Elite&display=swap');
         
