@@ -1,14 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo, ChangeEvent, MouseEvent } from 'react';
+import React, { useState, useEffect, useRef, useMemo, MouseEvent } from 'react';
 import { Heart } from 'lucide-react';
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 /**
  * EMOTIONAL PROPOSAL APP - REFINED LAYOUT
- * - Fixed Z-index stacking (Header > Buttons > Background).
- * - Safe-zone teleportation for the "NO" button.
- * - Aspect-ratio locked, non-distorting image frames.
  */
 
 type ImageWithCaption = {
@@ -52,10 +49,10 @@ type FloatingHeartsProps = {
 };
 
 const themes = [
-    { orb1: 'bg-rose-900/10', orb2: 'bg-indigo-900/10' },
-    { orb1: 'bg-sky-900/20', orb2: 'bg-violet-900/20' }, // Midnight
-    { orb1: 'bg-amber-800/10', orb2: 'bg-red-900/10' }, // Sunset
-    { orb1: 'bg-teal-900/10', orb2: 'bg-cyan-900/10' }, // Twilight
+  { orb1: 'bg-rose-900/10', orb2: 'bg-indigo-900/10' },
+  { orb1: 'bg-sky-900/20', orb2: 'bg-violet-900/20' },
+  { orb1: 'bg-amber-800/10', orb2: 'bg-red-900/10' },
+  { orb1: 'bg-teal-900/10', orb2: 'bg-cyan-900/10' },
 ];
 
 export default function Home() {
@@ -123,15 +120,12 @@ export default function Home() {
 
   return (
     <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30">
-      
-      {/* --- BACKGROUND AMBIANCE --- */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentTheme.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentTheme.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
         <FloatingHearts count={12} />
       </div>
 
-      {/* --- MAIN HEADER --- */}
       <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
         <h1 className="text-5xl md:text-8xl font-black mb-4 tracking-tighter text-white drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]">
           {setupData.partnerName}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-rose-600 to-pink-500 bg-[length:200%_auto] animate-gradient-x">
@@ -143,7 +137,6 @@ export default function Home() {
         </p>
       </div>
 
-      {/* --- BUTTON CANVAS --- */}
       <div className="w-full h-full absolute inset-0 z-40">
         <div className="relative w-full h-full">
           <LivingButton 
@@ -163,7 +156,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- FOOTER FEEDBACK --- */}
       <div className={`absolute bottom-12 z-50 pointer-events-none transition-opacity duration-500 ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
           <div className="px-6 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
             <div className="text-rose-400 font-bold text-[9px] tracking-[0.4em] uppercase flex items-center gap-3">
@@ -216,25 +208,21 @@ const LoveOdyssey = ({
     return () => clearInterval(slideInterval);
   }, [displayImages.length]);
 
-  // Frame styles logic
   const getFrameStyles = (index: number) => {
     const frameType = index % 3;
     if (frameType === 0) {
-      // Vintage Gold Frame
       return {
         outer: "bg-gradient-to-tr from-amber-600 via-yellow-200 to-amber-700 p-2 shadow-[0_0_60px_rgba(251,191,36,0.3)]",
         inner: "border-4 border-amber-900/20",
         label: "text-amber-200 font-serif italic"
       };
     } else if (frameType === 1) {
-      // Cyber Neon Frame
       return {
         outer: "bg-gradient-to-tr from-cyan-500 via-fuchsia-500 to-blue-500 p-1 animate-pulse shadow-[0_0_80px_rgba(192,38,211,0.4)]",
         inner: "border border-white/20",
         label: "text-cyan-300 font-mono uppercase tracking-widest"
       };
     } else {
-      // Modern Rose Minimal
       return {
         outer: "bg-gradient-to-tr from-rose-500 to-pink-500 p-1.5 shadow-[0_0_50px_rgba(225,29,72,0.4)]",
         inner: "border-2 border-white/10",
@@ -247,13 +235,11 @@ const LoveOdyssey = ({
 
   return (
     <div className="fixed inset-0 bg-[#020617] flex items-center justify-center overflow-hidden z-[100] p-4 font-sans">
-      {/* Dynamic Background Blur */}
       <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
         <img src={displayImages[currentIndex].src} className="w-full h-full object-cover" alt="" />
       </div>
       
       <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center h-full">
-        {/* The Artistic Frame - Centered in the viewport */}
         <div className={`relative group rounded-2xl transition-all duration-1000 transform hover:scale-105 ${frameStyles.outer}`}>
           <div className="bg-slate-900 rounded-xl overflow-hidden shadow-2xl">
             <div className={`relative overflow-hidden aspect-[3/4] w-64 md:w-80 ${frameStyles.inner}`}>
@@ -281,7 +267,6 @@ const LoveOdyssey = ({
           </div>
         </div>
 
-        {/* Success Message Card - Positioned relative to the frame to keep overall layout balanced */}
         {showMessage && (
           <div className="absolute top-[85%] md:top-[80%] p-6 md:p-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg">
@@ -300,7 +285,6 @@ const LoveOdyssey = ({
         )}
       </div>
 
-      {/* Restart Button */}
       <button onClick={() => window.location.reload()} className="absolute bottom-6 text-white/20 hover:text-rose-400 text-[10px] font-bold tracking-[0.5em] uppercase transition-all z-[110] border-b border-white/10 pb-1">
         Begin New Chapter
       </button>
@@ -318,7 +302,6 @@ const LoveOdyssey = ({
     </div>
   );
 };
-
 
 const FloatingHearts = ({ count }: FloatingHeartsProps) => {
   const [hearts, setHearts] = useState<any[]>([]);
@@ -448,8 +431,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   return (
     <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden relative">
       <FloatingBackground />
-
-      {/* Dynamic Glow Elements */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-900/10 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[120px] animate-pulse delay-700" />
@@ -457,8 +438,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
 
       <div className="relative w-full max-w-xl z-10">
         <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl overflow-hidden group">
-          
-          {/* Header */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30 group-hover:scale-110 transition-transform duration-500">
               <HeartSVG className="w-8 h-8 text-rose-500 animate-pulse" />
@@ -468,7 +447,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
           </div>
 
           <div className="space-y-6">
-            {/* Names Input */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Your Name</label>
@@ -492,7 +470,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
               </div>
             </div>
 
-            {/* Custom Message */}
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">The Final Note (Optional)</label>
               <textarea 
@@ -503,10 +480,8 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
               />
             </div>
 
-            {/* Photo Memories */}
             <div className="space-y-3">
               <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Memories & Captions ({formData.images.length})</label>
-              
               <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                 {formData.images.map((img, i) => (
                   <div key={i} className="group/item relative flex gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 animate-in slide-in-from-right-2 duration-300">
@@ -531,7 +506,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
                     </div>
                   </div>
                 ))}
-
                 <label className="w-full h-20 rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer text-white/20 hover:text-white/40 hover:bg-white/5 hover:border-white/20 transition-all duration-300">
                   <span className="text-xl mb-1">+</span>
                   <span className="text-[9px] font-black uppercase tracking-[0.3em]">Upload Photos</span>
@@ -540,7 +514,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
               </div>
             </div>
 
-            {/* Launch Button */}
             <button 
               disabled={!isFormValid}
               onClick={() => onStart(formData)}
@@ -560,7 +533,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
             </button>
           </div>
         </div>
-        
         <p className="text-center mt-8 text-white/10 text-[9px] font-bold tracking-[0.5em] uppercase pointer-events-none">
           Secure & Private Experience
         </p>
@@ -570,17 +542,68 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
-        
         @keyframes float-up {
           0% { transform: translateY(0) rotate(0deg); opacity: 0; }
           10% { opacity: inherit; }
           90% { opacity: inherit; }
           100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
         }
-        .animate-float-up {
-          animation: float-up linear infinite;
-        }
+        .animate-float-up { animation: float-up linear infinite; }
       `}</style>
+    </div>
+  );
+};
+
+const Eye = ({ pos, mood }: { pos: {x: number, y: number}, mood: string }) => {
+  const moods: Record<string, any> = {
+    happy: { lid: '15%', p: 1.2, bg: 'bg-white', color: 'bg-slate-900', cheeks: true },
+    beaming: { lid: '-10%', p: 1.4, bg: 'bg-white', color: 'bg-slate-900', shine: true },
+    blushing: { lid: '25%', p: 1.1, bg: 'bg-rose-50', color: 'bg-slate-900', blush: true },
+    partying: { lid: '5%', p: 1.5, bg: 'bg-white', color: 'bg-slate-900', sparkle: true },
+    kissing: { lid: '35%', p: 1.0, bg: 'bg-white', color: 'bg-slate-900', kiss: true },
+    heartEyes: { lid: '0%', p: 1.0, bg: 'bg-white', showHearts: true },
+    angry: { lid: '-5%', p: 1.2, bg: 'bg-orange-100', color: 'bg-slate-900', brows: 'angry', steam: true },
+    pouting: { lid: '35%', p: 1.1, bg: 'bg-rose-100', color: 'bg-slate-900', brows: 'angry', blush: true },
+    pensive: { lid: '60%', p: 0.9, bg: 'bg-indigo-50', color: 'bg-slate-700', tear: true },
+    grimacing: { lid: '15%', p: 0.8, bg: 'bg-white', color: 'bg-slate-900', shake: true },
+    thinking: { lid: '20%', p: 1.2, bg: 'bg-white', color: 'bg-slate-900', brows: 'uneven' },
+    astonished: { lid: '-45%', p: 1.6, bg: 'bg-white', color: 'bg-slate-900', shock: true },
+    exhausted: { lid: '85%', p: 0.5, bg: 'bg-slate-200', color: 'bg-slate-500', sweat: true },
+    broken: { lid: '100%', p: 0, bg: 'bg-slate-900' },
+    neutral: { lid: '25%', p: 1, bg: 'bg-white', color: 'bg-slate-900' }
+  };
+  
+  const m = moods[mood] || moods.neutral;
+
+  return (
+    <div className={`w-8 h-8 md:w-10 md:h-10 ${m.bg} rounded-full overflow-hidden relative shadow-inner flex items-center justify-center transition-all duration-500 ${m.shake ? 'animate-bounce' : ''}`}>
+      {m.brows === 'angry' && (
+        <div className="absolute top-1 left-0 w-full flex justify-around px-1 z-30">
+          <div className="w-3 h-0.5 md:w-4 md:h-1 bg-slate-900 rounded-full rotate-12 -translate-y-1" />
+          <div className="w-3 h-0.5 md:w-4 md:h-1 bg-slate-900 rounded-full -rotate-12 -translate-y-1" />
+        </div>
+      )}
+      {m.brows === 'uneven' && (
+        <div className="absolute top-1 left-0 w-full flex justify-around px-1 z-30">
+          <div className="w-3 h-0.5 md:w-4 md:h-1 bg-slate-900 rounded-full -rotate-6" />
+          <div className="w-3 h-0.5 md:w-4 md:h-1 bg-slate-900 rounded-full -translate-y-1" />
+        </div>
+      )}
+      {m.showHearts ? (
+        <HeartSVG className="w-6 h-6 md:w-8 md:h-8 text-rose-500 animate-pulse" />
+      ) : (
+        <div 
+          className={`w-4 h-4 md:w-5 md:h-5 ${m.color} rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-150`}
+          style={{ transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) scale(${m.p})` }} 
+        >
+          {m.shock && <div className="absolute inset-0 bg-white/20 rounded-full animate-ping" />}
+          <div className="absolute top-0.5 right-0.5 w-1 h-1 md:w-1.5 md:h-1.5 bg-white rounded-full opacity-60" />
+        </div>
+      )}
+      <div className="absolute top-0 left-0 w-full bg-slate-800 transition-all duration-300" style={{ height: m.lid }} />
+      {m.blush && <div className="absolute bottom-0 inset-x-0 h-2 md:h-3 bg-rose-400/30 blur-sm animate-pulse" />}
+      {m.tear && <div className="absolute bottom-1 left-2 w-1 h-1 md:w-1.5 md:h-1.5 bg-blue-400 rounded-full animate-bounce" />}
+      {m.sweat && <div className="absolute top-1 right-1 w-1.5 h-1.5 md:w-2 md:h-2 bg-cyan-200 rounded-full blur-[1px] animate-pulse" />}
     </div>
   );
 };
@@ -588,47 +611,30 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
 
 const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount }: LivingButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [magneticOffset, setMagneticOffset] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   const [teleports, setTeleports] = useState(0);
   const [speech, setSpeech] = useState("");
   const [mode, setMode] = useState<string | null>(null); 
-
-  // New state for temporary pause
   const [isPaused, setIsPaused] = useState(false);
   const pauseTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [emotionCycle, setEmotionCycle] = useState(0);
   
   const isYes = type === 'yes';
   const maxAttempts = 4;
 
-  const yesButtonClasses = "bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-all duration-200 active:scale-95 flex items-center gap-2";
-  const noButtonClasses = "bg-gray-200 hover:bg-gray-300 text-gray-600 font-semibold py-4 px-8 rounded-full shadow-md transition-all duration-200";
-  const finalStateClasses = "scale-[120] opacity-100 fixed inset-0 z-[60] rounded-none !m-0 !translate-x-0 !translate-y-0";
-
-  // Effect to handle the pause logic
   useEffect(() => {
     if (isYes || isFinalState) return;
-
-    if (rejectionCount >= maxAttempts && !isPaused) {
-      setIsPaused(true);
-      setSpeech("I'm tired...");
-      if(pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
-      pauseTimerRef.current = setTimeout(() => {
-        setIsPaused(false);
-        // After pausing, it will start running again if the cursor gets close
-      }, 2000); // 2 second pause
-    }
-
-    return () => {
-      if (pauseTimerRef.current) {
-        clearTimeout(pauseTimerRef.current);
-      }
-    };
-  }, [isYes, isFinalState, rejectionCount, isPaused]);
-
+    const interval = setInterval(() => {
+      setEmotionCycle(prev => (prev + 1) % 5);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isYes, isFinalState]);
 
   const triggerEvasion = () => {
-    if (teleports >= 15) return; // a higher internal limit
+    if (teleports >= 15) return;
     const modes = ['tiny', 'tornado', 'wind', 'ghost'];
     const currentMode = modes[teleports % modes.length];
     const lines = ["Nope!", "🌪️ TORNADO!", "💨 Catch me!", "👻 Ghostly!", "Almost!", "Oof...", "Wait...", "I'm pooped...", "Fine..."];
@@ -639,10 +645,8 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
       const padding = 60;
       const safeTop = window.innerHeight * 0.3;
       const safeBottom = window.innerHeight * 0.8;
-      
       let tx = (Math.random() * (window.innerWidth - padding * 3)) + padding;
       let ty = (Math.random() * (safeBottom - safeTop)) + safeTop;
-
       setPosition({ 
         x: tx - (window.innerWidth / 2), 
         y: ty - (window.innerHeight / 2) 
@@ -651,9 +655,27 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
       setTimeout(() => setMode(null), 300);
     }, 400);
   };
+  
+  useEffect(() => {
+    if (isYes || isFinalState) return;
+    if (rejectionCount && rejectionCount >= maxAttempts && !isPaused) {
+      setIsPaused(true);
+      setSpeech("I'm tired...");
+      if(pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+      pauseTimerRef.current = setTimeout(() => {
+        setIsPaused(false);
+        // If not clicked, it runs away again
+        triggerEvasion();
+      }, 2000); // 2 second pause
+    }
+    return () => {
+      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+    };
+  }, [isYes, isFinalState, rejectionCount, isPaused]);
+
 
   useEffect(() => {
-    if (isFinalState || isPaused) return;
+    if (isFinalState || (isPaused && !isYes)) return;
     const handleMove = (e: globalThis.MouseEvent) => {
       if (!buttonRef.current || mode) return;
       const r = buttonRef.current.getBoundingClientRect();
@@ -664,28 +686,45 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
       const dist = Math.hypot(dx, dy);
       const angle = Math.atan2(dy, dx);
       
+      setPupilPos({ x: Math.cos(angle) * 7, y: Math.sin(angle) * 7 });
+
       if (isYes) {
         const pullRadius = 350;
         const pull = Math.max(0, 1 - dist / pullRadius); 
         setMagneticOffset({ x: Math.cos(angle) * 20 * pull, y: Math.sin(angle) * 20 * pull });
       } else {
         const evasionRadius = Math.max(100, 220 - (teleports * 10));
-        if (dist < evasionRadius && rejectionCount < maxAttempts) triggerEvasion();
+        if (dist < evasionRadius && (rejectionCount ?? 0) < maxAttempts) triggerEvasion();
       }
     };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, [teleports, isFinalState, isYes, mode, rejectionCount, isPaused]);
 
+  const getMood = () => {
+    if (isFinalState) return 'broken';
+    if (isYes) {
+      if (isHovered) return 'heartEyes';
+      const yesMoods = ['happy', 'beaming', 'blushing', 'partying', 'kissing'];
+      return yesMoods[emotionCycle];
+    }
+    if (isPaused || (rejectionCount && rejectionCount >= maxAttempts)) return 'exhausted';
+    if (mode) return 'astonished';
+    if (rejectionCount && rejectionCount > 3) return 'pouting';
+    if (rejectionCount && rejectionCount > 2) return 'angry';
+    if (rejectionCount && rejectionCount > 1) return 'grimacing';
+    return isHovered ? 'thinking' : 'neutral';
+  };
+
   return (
     <div 
       className={`absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex flex-col items-center pointer-events-auto z-40
-        ${rejectionCount >= maxAttempts ? 'animate-pant' : ''}`}
+        ${(rejectionCount ?? 0) >= maxAttempts ? 'animate-pant' : ''}`}
       style={{
         transform: `translate(calc(-50% + ${position.x + magneticOffset.x}px), calc(-50% + ${position.y + magneticOffset.y}px)) scale(${mode === 'tiny' ? 0.2 : 1})`,
         marginLeft: isYes ? (position.x === 0 ? '-150px' : '0') : (position.x === 0 ? '150px' : '0'),
         opacity: mode === 'ghost' ? 0.2 : 1,
-        cursor: (!isYes && rejectionCount < maxAttempts) ? 'none' : 'pointer'
+        cursor: (!isYes && rejectionCount && rejectionCount < maxAttempts && !isPaused) ? 'none' : 'pointer'
       }}
     >
       {speech && !isFinalState && (
@@ -698,19 +737,28 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
         ref={buttonRef}
         type="button"
         onClick={isYes ? onClick : onCaught}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => { setIsHovered(false); if (isYes) { setMagneticOffset({ x: 0, y: 0 }); } }}
         className={cn(
-          isYes ? yesButtonClasses : noButtonClasses,
-          isYes && isFinalState && finalStateClasses
+          'relative flex flex-col items-center justify-center transition-all duration-300 active:scale-95 group',
+          'w-48 h-36 rounded-[2.5rem]',
+          isYes
+          ? 'bg-rose-500 hover:bg-rose-600 text-white font-bold shadow-lg'
+          : 'bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold shadow-md',
+          isYes && isFinalState && "scale-[120] opacity-100 fixed inset-0 z-[60] rounded-none !m-0 !translate-x-0 !translate-y-0"
         )}
       >
-        {isYes ? (
-          <>
-            <Heart size={20} fill="white" />
-            <span>{label}!</span>
-          </>
-        ) : (
-          <span>{label}...</span>
-        )}
+        <div className={`flex gap-3 mb-3 scale-110 md:scale-125 transition-all duration-300 ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
+            <Eye pos={pupilPos} mood={getMood()} />
+            <Eye pos={pupilPos} mood={getMood()} />
+        </div>
+
+        <div className={cn('flex items-center gap-2 transition-opacity', isFinalState ? 'opacity-0' : 'opacity-100')}>
+            {isYes && <Heart size={20} fill="white" />}
+            <span className={cn('font-black tracking-[0.2em]', isYes ? 'text-xl' : 'text-lg')}>
+              {label}{isYes ? '!' : '...'}
+            </span>
+        </div>
       </button>
 
       <style>{`
@@ -723,4 +771,3 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
     </div>
   );
 };
-```
