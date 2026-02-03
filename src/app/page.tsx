@@ -1,12 +1,9 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, MouseEvent } from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from "@/lib/utils";
-
-/**
- * EMOTIONAL PROPOSAL APP - REFINED LAYOUT
- */
 
 type ImageWithCaption = {
   src: string;
@@ -38,6 +35,9 @@ type LivingButtonProps = {
   onCaught?: () => void;
   isFinalState: boolean;
   rejectionCount?: number;
+  yesButtonScale: number;
+  setYesButtonScale: React.Dispatch<React.SetStateAction<number>>;
+  setNoButtonScale: React.Dispatch<React.SetStateAction<number>>;
 };
 
 type HeartSVGProps = {
@@ -50,9 +50,9 @@ type FloatingHeartsProps = {
 
 const themes = [
   { orb1: 'bg-rose-900/10', orb2: 'bg-indigo-900/10' },
-  { orb1: 'bg-sky-900/20', orb2: 'bg-violet-900/20' },
-  { orb1: 'bg-amber-800/10', orb2: 'bg-red-900/10' },
-  { orb1: 'bg-teal-900/10', orb2: 'bg-cyan-900/10' },
+  { orb1: 'bg-sky-900/20', orb2: 'bg-violet-900/20' }, // Midnight
+  { orb1: 'bg-amber-800/10', orb2: 'bg-red-900/10' },   // Sunset
+  { orb1: 'bg-teal-900/10', orb2: 'bg-cyan-900/10' },   // Twilight
 ];
 
 export default function Home() {
@@ -67,6 +67,8 @@ export default function Home() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [rejectionCount, setRejectionCount] = useState(0);
   const [themeIndex, setThemeIndex] = useState(0);
+  const [yesButtonScale, setYesButtonScale] = useState(1);
+  const [noButtonScale, setNoButtonScale] = useState(1);
 
   const handleStart = (data: SetupData) => {
     setSetupData(data);
@@ -77,6 +79,10 @@ export default function Home() {
     if (rejectionCount < 4) {
       setRejectionCount(prev => prev + 1);
       setThemeIndex(prev => (prev + 1) % themes.length);
+      setYesButtonScale(prev => prev + 0.4);
+      setNoButtonScale(prev => Math.max(prev - 0.1, 0.5));
+    } else {
+       if (onCaught) onCaught();
     }
   };
 
@@ -87,6 +93,12 @@ export default function Home() {
       setShowSuccess(true);
     }, 800);
   };
+  
+    const onCaught = () => {
+    setRejectionCount(prev => prev + 1);
+    setThemeIndex(prev => (prev + 1) % themes.length);
+  };
+
 
   if (!isStarted) {
     return <SetupPage onStart={handleStart} />;
@@ -144,6 +156,9 @@ export default function Home() {
             label="YES"
             onClick={handleYesClicked}
             isFinalState={isFinalState} 
+            yesButtonScale={yesButtonScale}
+            setYesButtonScale={setYesButtonScale}
+            setNoButtonScale={setNoButtonScale}
           />
           <LivingButton 
             key={rejectionCount} 
@@ -152,6 +167,9 @@ export default function Home() {
             onCaught={handleNoClicked} 
             isFinalState={isFinalState} 
             rejectionCount={rejectionCount}
+            yesButtonScale={yesButtonScale}
+            setYesButtonScale={setYesButtonScale}
+            setNoButtonScale={setNoButtonScale}
           />
         </div>
       </div>
@@ -355,14 +373,15 @@ const FloatingBackground = () => {
 
   useEffect(() => {
     setMounted(true);
-    setHearts(Array.from({ length: 20 }).map((_, i) => ({
+    const generatedHearts = Array.from({ length: 20 }).map((_, i) => ({
       id: i,
-      left: Math.random() * 100,
-      size: Math.random() * 20 + 10,
-      delay: Math.random() * 10,
-      duration: Math.random() * 15 + 10,
-      opacity: Math.random() * 0.3 + 0.05
-    })))
+      left: `${Math.random() * 100}%`,
+      width: `${Math.random() * 20 + 10}px`,
+      opacity: Math.random() * 0.3 + 0.05,
+      delay: `${Math.random() * 10}s`,
+      duration: `${Math.random() * 15 + 10}s`,
+    }));
+    setHearts(generatedHearts);
   }, []);
 
   if (!mounted) return null;
@@ -374,11 +393,11 @@ const FloatingBackground = () => {
           key={h.id}
           className="absolute bottom-[-10%] animate-float-up text-rose-500/40"
           style={{
-            left: `${h.left}%`,
-            width: `${h.size}px`,
+            left: h.left,
+            width: h.width,
             opacity: h.opacity,
-            animationDelay: `${h.delay}s`,
-            animationDuration: `${h.duration}s`,
+            animationDelay: h.delay,
+            animationDuration: h.duration,
           }}
         >
           <HeartSVG className="w-full h-full" />
@@ -395,6 +414,10 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     message: '', 
     images: []
   });
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -430,7 +453,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
 
   return (
     <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden relative">
-      <FloatingBackground />
+      {mounted && <FloatingBackground />}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-900/10 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[120px] animate-pulse delay-700" />
@@ -609,19 +632,20 @@ const Eye = ({ pos, mood }: { pos: {x: number, y: number}, mood: string }) => {
 };
 
 
-const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount }: LivingButtonProps) => {
+const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount = 0, yesButtonScale, setYesButtonScale, setNoButtonScale }: LivingButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [magneticOffset, setMagneticOffset] = useState({ x: 0, y: 0 });
+  const [dynamicOffset, setDynamicOffset] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [teleports, setTeleports] = useState(0);
   const [speech, setSpeech] = useState("");
-  const [mode, setMode] = useState<string | null>(null); 
+  const [mode, setMode] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const pauseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [emotionCycle, setEmotionCycle] = useState(0);
-  
+  const glitchIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const isYes = type === 'yes';
   const maxAttempts = 4;
 
@@ -634,50 +658,74 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
   }, [isYes, isFinalState]);
 
   const triggerEvasion = () => {
-    if (teleports >= 15) return;
-    const modes = ['tiny', 'tornado', 'wind', 'ghost'];
-    const currentMode = modes[teleports % modes.length];
-    const lines = ["Nope!", "🌪️ TORNADO!", "💨 Catch me!", "👻 Ghostly!", "Almost!", "Oof...", "Wait...", "I'm pooped...", "Fine..."];
-    setMode(currentMode);
-    setSpeech(lines[Math.min(teleports, lines.length - 1)]);
+    if (teleports >= 15 || isPaused) return;
+
+    const tactics = ['tiny', 'tornado', 'wind', 'ghost', 'newton', 'blackhole', 'glitch'];
+    const chosenTactic = tactics[Math.floor(Math.random() * tactics.length)];
     
-    setTimeout(() => {
+    setMode(chosenTactic);
+    setSpeech("");
+
+    if (chosenTactic === 'glitch' && glitchIntervalRef.current === null) {
+      glitchIntervalRef.current = setInterval(() => {
+        const r = buttonRef.current?.getBoundingClientRect() || {x: 0, y: 0, width: 200, height: 150};
+        const glitchX = (Math.random() - 0.5) * 40;
+        const glitchY = (Math.random() - 0.5) * 40;
+        setPosition(prev => ({ x: prev.x + glitchX, y: prev.y + glitchY }));
+      }, 200);
+    } else if (chosenTactic !== 'glitch' && glitchIntervalRef.current) {
+        clearInterval(glitchIntervalRef.current);
+        glitchIntervalRef.current = null;
+    }
+
+    if (['tiny', 'tornado', 'wind', 'ghost'].includes(chosenTactic)) {
       const padding = 60;
       const safeTop = window.innerHeight * 0.3;
       const safeBottom = window.innerHeight * 0.8;
       let tx = (Math.random() * (window.innerWidth - padding * 3)) + padding;
       let ty = (Math.random() * (safeBottom - safeTop)) + safeTop;
-      setPosition({ 
-        x: tx - (window.innerWidth / 2), 
-        y: ty - (window.innerHeight / 2) 
-      });
-      setTeleports(t => t + 1);
-      setTimeout(() => setMode(null), 300);
-    }, 400);
+      setPosition({ x: tx - (window.innerWidth / 2), y: ty - (window.innerHeight / 2) });
+    }
+    
+    setTeleports(t => t + 1);
+
+    setTimeout(() => {
+        if(chosenTactic !== 'glitch') setMode(null);
+    }, 1000); 
   };
   
   useEffect(() => {
     if (isYes || isFinalState) return;
-    if (rejectionCount && rejectionCount >= maxAttempts && !isPaused) {
+    if (rejectionCount >= maxAttempts && !isPaused) {
       setIsPaused(true);
       setSpeech("I'm tired...");
+      setMode(null); // Stop current evasion
+      if (glitchIntervalRef.current) {
+        clearInterval(glitchIntervalRef.current);
+        glitchIntervalRef.current = null;
+      }
       if(pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
       pauseTimerRef.current = setTimeout(() => {
         setIsPaused(false);
-        // If not clicked, it runs away again
-        triggerEvasion();
-      }, 2000); // 2 second pause
+        setSpeech("...");
+        // After pause, if not caught, it runs away again.
+        if (buttonRef.current) {
+             triggerEvasion();
+        }
+      }, 2000);
     }
     return () => {
       if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+      if (glitchIntervalRef.current) clearInterval(glitchIntervalRef.current);
     };
   }, [isYes, isFinalState, rejectionCount, isPaused]);
 
 
   useEffect(() => {
-    if (isFinalState || (isPaused && !isYes)) return;
+    if (isFinalState || isPaused) return;
+    
     const handleMove = (e: globalThis.MouseEvent) => {
-      if (!buttonRef.current || mode) return;
+      if (!buttonRef.current) return;
       const r = buttonRef.current.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
@@ -688,14 +736,36 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
       
       setPupilPos({ x: Math.cos(angle) * 7, y: Math.sin(angle) * 7 });
 
+      let newOffset = { x: 0, y: 0 };
+
       if (isYes) {
         const pullRadius = 350;
         const pull = Math.max(0, 1 - dist / pullRadius); 
-        setMagneticOffset({ x: Math.cos(angle) * 20 * pull, y: Math.sin(angle) * 20 * pull });
+        newOffset = { x: Math.cos(angle) * 20 * pull, y: Math.sin(angle) * 20 * pull };
       } else {
-        const evasionRadius = Math.max(100, 220 - (teleports * 10));
-        if (dist < evasionRadius && (rejectionCount ?? 0) < maxAttempts) triggerEvasion();
+        if (mode === 'newton') {
+          const repelRadius = 250;
+          if (dist < repelRadius) {
+            const force = (1 - dist / repelRadius) * 25;
+            newOffset = { x: -Math.cos(angle) * force, y: -Math.sin(angle) * force };
+          }
+        } else if (mode === 'blackhole') {
+          const pullRadius = 400;
+          if (dist < pullRadius) {
+            const force = (1 - dist / pullRadius) * -30;
+            newOffset = { x: Math.cos(angle) * force, y: Math.sin(angle) * force };
+          }
+          if (dist < 20) { // Slip away
+            triggerEvasion();
+          }
+        } else {
+          const evasionRadius = Math.max(100, 220 - (teleports * 10));
+          if (dist < evasionRadius && rejectionCount < maxAttempts && !mode) {
+             triggerEvasion();
+          }
+        }
       }
+      setDynamicOffset(newOffset);
     };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
@@ -708,23 +778,31 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
       const yesMoods = ['happy', 'beaming', 'blushing', 'partying', 'kissing'];
       return yesMoods[emotionCycle];
     }
-    if (isPaused || (rejectionCount && rejectionCount >= maxAttempts)) return 'exhausted';
-    if (mode) return 'astonished';
-    if (rejectionCount && rejectionCount > 3) return 'pouting';
-    if (rejectionCount && rejectionCount > 2) return 'angry';
-    if (rejectionCount && rejectionCount > 1) return 'grimacing';
+    if (isPaused || rejectionCount >= maxAttempts) return 'exhausted';
+    if (mode === 'glitch') return 'astonished';
+    if (rejectionCount > 3) return 'pouting';
+    if (rejectionCount > 2) return 'angry';
+    if (rejectionCount > 1) return 'grimacing';
     return isHovered ? 'thinking' : 'neutral';
   };
 
+  const currentNoButtonScale = isYes ? 1 : (noButtonScale ?? 1);
+
   return (
     <div 
-      className={`absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex flex-col items-center pointer-events-auto z-40
-        ${(rejectionCount ?? 0) >= maxAttempts ? 'animate-pant' : ''}`}
+      className={`absolute top-1/2 left-1/2 transition-transform duration-300 ease-out flex flex-col items-center pointer-events-auto z-40
+        ${rejectionCount >= maxAttempts ? 'animate-pant' : ''}
+        ${mode === 'tornado' ? 'animate-spin' : ''}
+        ${mode === 'wind' ? 'skew-x-12' : ''}
+      `}
       style={{
-        transform: `translate(calc(-50% + ${position.x + magneticOffset.x}px), calc(-50% + ${position.y + magneticOffset.y}px)) scale(${mode === 'tiny' ? 0.2 : 1})`,
+        transform: `
+          translate(calc(-50% + ${position.x + dynamicOffset.x}px), calc(-50% + ${position.y + dynamicOffset.y}px)) 
+          scale(${mode === 'tiny' ? 0.2 : (isYes ? yesButtonScale : currentNoButtonScale)})`,
         marginLeft: isYes ? (position.x === 0 ? '-150px' : '0') : (position.x === 0 ? '150px' : '0'),
         opacity: mode === 'ghost' ? 0.2 : 1,
-        cursor: (!isYes && rejectionCount && rejectionCount < maxAttempts && !isPaused) ? 'none' : 'pointer'
+        cursor: (!isYes && rejectionCount < maxAttempts && !isPaused) ? 'none' : 'pointer',
+        filter: mode === 'newton' ? 'drop-shadow(0 0 10px cyan)' : 'none',
       }}
     >
       {speech && !isFinalState && (
@@ -736,9 +814,9 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
       <button
         ref={buttonRef}
         type="button"
-        onClick={isYes ? onClick : onCaught}
+        onClick={isYes ? onClick : (rejectionCount >= maxAttempts ? onCaught : onCaught)}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => { setIsHovered(false); if (isYes) { setMagneticOffset({ x: 0, y: 0 }); } }}
+        onMouseLeave={() => { setIsHovered(false); if (isYes) { setDynamicOffset({ x: 0, y: 0 }); } }}
         className={cn(
           'relative flex flex-col items-center justify-center transition-all duration-300 active:scale-95 group',
           'w-48 h-36 rounded-[2.5rem]',
@@ -759,6 +837,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
               {label}{isYes ? '!' : '...'}
             </span>
         </div>
+        {mode === 'blackhole' && <div className="absolute inset-0 rounded-[2.5rem] bg-black/30 animate-spin-slow" />}
       </button>
 
       <style>{`
@@ -767,7 +846,10 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
           50% { transform: translateY(-3px); }
         }
         .animate-pant { animation: pant 0.2s infinite; }
+        .animate-spin-slow { animation: spin 2s linear infinite; }
       `}</style>
     </div>
   );
 };
+
+    
