@@ -325,8 +325,10 @@ const LoveOdyssey = ({
 
 const FloatingHearts = ({ count }: FloatingHeartsProps) => {
   const [hearts, setHearts] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setHearts(
       Array.from({ length: count }).map((_, i) => ({
         id: i,
@@ -337,6 +339,8 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
       }))
     );
   }, [count]);
+
+  if (!mounted) return null;
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -367,8 +371,10 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
 
 const FloatingBackground = () => {
   const [hearts, setHearts] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setHearts(Array.from({ length: 20 }).map((_, i) => ({
       id: i,
       left: Math.random() * 100,
@@ -378,6 +384,8 @@ const FloatingBackground = () => {
       opacity: Math.random() * 0.3 + 0.05
     })))
   }, []);
+
+  if (!mounted) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
