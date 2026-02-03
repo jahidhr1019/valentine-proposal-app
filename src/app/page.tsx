@@ -123,7 +123,7 @@ export default function Home() {
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentTheme.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentTheme.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
-        <FloatingHearts count={12} />
+        <FloatingHearts count={30} />
       </div>
 
       <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
@@ -313,15 +313,17 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
 
   useEffect(() => {
     setMounted(true);
-    setHearts(
-      Array.from({ length: count }).map((_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        size: Math.random() * 15 + 10,
-        delay: Math.random() * 5,
-        duration: Math.random() * 8 + 12,
-      }))
-    );
+    if (typeof window !== 'undefined') {
+      setHearts(
+        Array.from({ length: count }).map((_, i) => ({
+          id: i,
+          left: Math.random() * 100,
+          size: Math.random() * 15 + 10,
+          delay: Math.random() * 5,
+          duration: Math.random() * 8 + 12,
+        }))
+      );
+    }
   }, [count]);
 
   if (!mounted) return null;
@@ -707,7 +709,7 @@ const LivingButton = ({
 
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [mode, isYes, isFinalState]);
+  }, [mode, isYes, isFinalState, triggerEvasion]);
 
   return (
     <button
