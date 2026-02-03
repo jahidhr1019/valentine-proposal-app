@@ -72,7 +72,7 @@ export default function Home() {
     setRejectionCount(prev => prev + 1);
   };
 
-  const handleYesClicked = (e?: MouseEvent) => {
+  const handleYesClicked = (e?: React.MouseEvent) => {
     // Prevent event bubbling just in case
     if (e) e.stopPropagation();
     setIsFinalState(true);
@@ -130,7 +130,7 @@ export default function Home() {
       </div>
 
       {/* --- BUTTON CANVAS --- */}
-      <div className="w-full h-full fixed inset-0 pointer-events-none">
+      <div className="w-full h-full fixed inset-0">
         <div className="relative w-full h-full">
           <LivingButton 
             type="yes" 
@@ -399,7 +399,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState }: LivingBu
   const [mode, setMode] = useState<string | null>(null); 
   
   const isYes = type === 'yes';
-  const maxAttempts = 15;
+  const maxAttempts = 10;
 
   const triggerEvasion = () => {
     if (teleports >= maxAttempts) return;
