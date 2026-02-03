@@ -160,8 +160,8 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="w-full h-full absolute inset-0 z-40">
-        <div className="relative w-full h-full">
+      <div className="absolute inset-0 z-40">
+        <div className="relative w-full h-full flex items-center justify-center gap-8">
           <LivingButton 
             id="yes-button"
             type="yes" 
@@ -802,6 +802,7 @@ const LivingButton = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dynamicOffset, setDynamicOffset] = useState({ x: 0, y: 0 });
   const [mode, setMode] = useState<string | null>(null);
+  const [isFleeing, setIsFleeing] = useState(false);
 
   const isYes = type === 'yes';
 
@@ -829,6 +830,10 @@ const LivingButton = ({
 
   const triggerEvasion = useCallback(() => {
     if (isYes || isFinalState || mode || isHeartbroken) return;
+
+    if (!isFleeing) {
+      setIsFleeing(true);
+    }
 
     const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
     const tactic = tactics[Math.floor(Math.random() * tactics.length)];
@@ -873,7 +878,7 @@ const LivingButton = ({
     console.warn("Could not find a non-overlapping position for 'No' button.");
     setTimeout(() => setMode(null), 1000);
 
-  }, [isYes, isFinalState, mode, noButtonScale, isHeartbroken]);
+  }, [isYes, isFinalState, mode, noButtonScale, isHeartbroken, isFleeing]);
 
   useEffect(() => {
     const handleMove = (e: any) => {
@@ -913,6 +918,8 @@ const LivingButton = ({
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, [mode, isYes, isFinalState, noButtonScale, isHeartbroken]);
+  
+  const isFleeingNoButton = !isYes && isFleeing;
 
   return (
     <button
@@ -920,14 +927,21 @@ const LivingButton = ({
       ref={buttonRef}
       onClick={isYes ? onClick : onCaught}
       onMouseEnter={!isYes ? triggerEvasion : undefined}
-      style={{
+      style={isFleeingNoButton ? {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
                     calc(-50% + ${position.y + dynamicOffset.y}px)) 
-                    scale(${isYes ? yesButtonScale : noButtonScale})`,
+                    scale(${noButtonScale})`,
+      } : {
+        position: 'relative',
+        transform: `translate(${dynamicOffset.x}px, ${dynamicOffset.y}px) scale(${isYes ? yesButtonScale : noButtonScale})`,
       }}
       className={cn(
-        "absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl z-50 cursor-pointer",
+        "transition-all duration-300 ease-out flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl cursor-pointer",
         isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-100 border-slate-300 text-slate-800",
+        isFleeingNoButton ? "z-50" : (isYes ? "z-10" : "z-20"),
         mode === 'tornado' && "animate-spin",
         mode === 'ghost' && "opacity-20 blur-sm scale-125",
         mode === 'tiny' && "scale-0 opacity-0",
