@@ -34,7 +34,6 @@ export default function PhotoRally({ photos, message }: PhotoRallyProps) {
                       alt={photo.description}
                       fill
                       className="object-cover rounded-lg"
-                      data-ai-hint={photo.imageHint}
                     />
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center p-6">
                       <p className="font-headline text-2xl md:text-3xl text-white text-center shadow-lg">{message}</p>

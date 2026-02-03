@@ -56,7 +56,6 @@ export default function SetupForm({ onSubmit }: SetupFormProps) {
           id: `user-photo-${Date.now()}`,
           description: file.name,
           imageUrl,
-          imageHint: 'custom photo'
         };
         setAvailablePhotos((prev) => [newPhoto, ...prev]);
       };
@@ -165,7 +164,6 @@ export default function SetupForm({ onSubmit }: SetupFormProps) {
                       className={`w-full h-auto object-cover rounded-lg transition-all duration-300 ${
                         selectedPhotos.some((p) => p.id === photo.id) ? 'ring-4 ring-primary' : 'ring-2 ring-transparent'
                       }`}
-                      data-ai-hint={photo.imageHint}
                     />
                     {selectedPhotos.some((p) => p.id === photo.id) && (
                       <div className="absolute inset-0 bg-primary/50 flex items-center justify-center rounded-lg">
