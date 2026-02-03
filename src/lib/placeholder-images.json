@@ -17,6 +17,60 @@
       "width": 600,
       "height": 800,
       "hint": "romantic sunset"
+    },
+    {
+      "seedId": 104,
+      "width": 600,
+      "height": 800,
+      "hint": "couple laughing"
+    },
+    {
+      "seedId": 105,
+      "width": 600,
+      "height": 800,
+      "hint": "beach walk"
+    },
+    {
+      "seedId": 106,
+      "width": 600,
+      "height": 800,
+      "hint": "city lights"
+    },
+    {
+      "seedId": 107,
+      "width": 600,
+      "height": 800,
+      "hint": "cozy cabin"
+    },
+    {
+      "seedId": 108,
+      "width": 600,
+      "height": 800,
+      "hint": "mountain hike"
+    },
+    {
+      "seedId": 109,
+      "width": 600,
+      "height": 800,
+      "hint": "dancing kitchen"
+    },
+    {
+      "seedId": 110,
+      "width": 600,
+      "height": 800,
+      "hint": "park picnic"
+    },
+    {
+      "seedId": 111,
+      "width": 600,
+      "height": 800,
+      "hint": "stargazing"
+    },
+    {
+      "seedId": 112,
+      "width": 600,
+      "height": 800,
+      "hint": "rainy day"
     }
   ]
 }
