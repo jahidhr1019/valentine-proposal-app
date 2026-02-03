@@ -645,7 +645,7 @@ const LivingButton = ({
   const isYes = type === 'yes';
 
   const checkOverlap = (rectA: DOMRect, rectB: DOMRect) => {
-      const buffer = 30;
+      const buffer = 50; // Increased buffer for safety
       return !(
           rectA.right < rectB.left - buffer ||
           rectA.left > rectB.right + buffer ||
@@ -686,40 +686,43 @@ const LivingButton = ({
     const noButton = buttonRef.current;
     const yesButton = document.getElementById('yes-button');
 
-    if (!noButton || !yesButton) return;
+    if (!noButton || !yesButton) {
+        setTimeout(() => setMode(null), 1000);
+        return;
+    }
 
-    let nx, ny;
-    let attempts = 0;
-    const maxAttempts = 20;
-    
-    do {
-      const padding = 120;
-      nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
-      ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
+    const maxAttempts = 50;
+    for (let i = 0; i < maxAttempts; i++) {
+        const padding = 120;
+        const nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
+        const ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
 
-      const noButtonWidth = noButton.offsetWidth;
-      const noButtonHeight = noButton.offsetHeight;
-      const futureNoRect = {
-        left: window.innerWidth / 2 + nx - noButtonWidth / 2,
-        top: window.innerHeight / 2 + ny - noButtonHeight / 2,
-        right: window.innerWidth / 2 + nx + noButtonWidth / 2,
-        bottom: window.innerHeight / 2 + ny + noButtonHeight / 2,
-        width: noButtonWidth,
-        height: noButtonHeight,
-      } as DOMRect;
+        const currentNoButtonScale = noButtonScale ?? 1;
+        const noButtonWidth = noButton.offsetWidth * currentNoButtonScale;
+        const noButtonHeight = noButton.offsetHeight * currentNoButtonScale;
 
-      const yesRect = yesButton.getBoundingClientRect();
+        const futureNoRect = {
+            left: window.innerWidth / 2 + nx - noButtonWidth / 2,
+            top: window.innerHeight / 2 + ny - noButtonHeight / 2,
+            right: window.innerWidth / 2 + nx + noButtonWidth / 2,
+            bottom: window.innerHeight / 2 + ny + noButtonHeight / 2,
+            width: noButtonWidth,
+            height: noButtonHeight,
+        } as DOMRect;
+        
+        const yesRect = yesButton.getBoundingClientRect();
 
-      if (!checkOverlap(futureNoRect, yesRect)) {
-        break;
-      }
-      attempts++;
-    } while (attempts < maxAttempts);
+        if (!checkOverlap(futureNoRect, yesRect)) {
+            setPosition({ x: nx, y: ny });
+            setTimeout(() => setMode(null), 1000);
+            return;
+        }
+    }
 
-    setPosition({ x: nx, y: ny });
-
+    console.warn("Could not find a non-overlapping position for 'No' button.");
     setTimeout(() => setMode(null), 1000);
-  }, [isYes, isPaused, isFinalState, evasionCount, mode]);
+
+  }, [isYes, isPaused, isFinalState, evasionCount, mode, noButtonScale]);
 
   useEffect(() => {
     const handleMove = (e: any) => {
@@ -744,11 +747,11 @@ const LivingButton = ({
         }
       } else {
         if (mode === 'newton' && dist < 250) {
-          const force = (250 - dist) * 0.4 / noButtonScale;
+          const force = (250 - dist) * 0.4 / (noButtonScale || 1);
           setDynamicOffset({ x: -Math.cos(angle) * force, y: -Math.sin(angle) * force });
         }
         else if (mode === 'blackhole' && dist < 300) {
-          const force = (300 - dist) * 0.3 / noButtonScale;
+          const force = (300 - dist) * 0.3 / (noButtonScale || 1);
           setDynamicOffset({ x: Math.cos(angle) * force, y: Math.sin(angle) * force });
           if (dist < 45) triggerEvasion(); 
         } else {
@@ -763,7 +766,6 @@ const LivingButton = ({
 
   const handleNoClick = () => {
     onCaught?.();
-    setEvasionCount(0);
   };
 
   return (
