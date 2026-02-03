@@ -38,7 +38,6 @@ type LivingButtonProps = {
 
 type HeartSVGProps = {
   className?: string;
-  style?: React.CSSProperties;
 };
 
 type FloatingHeartsProps = {
@@ -76,8 +75,10 @@ export default function Home() {
   };
 
   const handleNoClicked = () => {
-    setRejectionCount(prev => prev + 1);
-    setThemeIndex(prev => (prev + 1) % themes.length);
+    if (rejectionCount < 4) {
+      setRejectionCount(prev => prev + 1);
+      setThemeIndex(prev => (prev + 1) % themes.length);
+    }
   };
 
   const handleYesClicked = (e?: MouseEvent) => {
@@ -165,7 +166,7 @@ export default function Home() {
           <div className="px-6 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
             <div className="text-rose-400 font-bold text-[9px] tracking-[0.4em] uppercase flex items-center gap-3">
               {rejectionCount === 0 ? "Chase the heart" : `Attempt ${rejectionCount}`}
-              {rejectionCount > 10 && <span className="text-white/40 animate-pulse">Running out of breath...</span>}
+              {rejectionCount > 3 && <span className="text-white/40 animate-pulse">Running out of breath...</span>}
             </div>
           </div>
       </div>
@@ -182,7 +183,18 @@ export default function Home() {
   );
 }
 
-const LoveOdyssey = ({ userImages, customMessage, partnerName, yourName }: LoveOdysseyProps) => {
+const HeartSVG = ({ className }: HeartSVGProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+  </svg>
+);
+
+const LoveOdyssey = ({ 
+  userImages, 
+  customMessage, 
+  partnerName, 
+  yourName 
+}: LoveOdysseyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMessage, setShowMessage] = useState(false);
   
@@ -197,79 +209,116 @@ const LoveOdyssey = ({ userImages, customMessage, partnerName, yourName }: LoveO
   useEffect(() => {
     const slideInterval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % displayImages.length);
-    }, 4000);
+    }, 4500);
     setTimeout(() => setShowMessage(true), 1200);
     return () => clearInterval(slideInterval);
   }, [displayImages.length]);
 
+  // Frame styles logic
+  const getFrameStyles = (index: number) => {
+    const frameType = index % 3;
+    if (frameType === 0) {
+      // Vintage Gold Frame
+      return {
+        outer: "bg-gradient-to-tr from-amber-600 via-yellow-200 to-amber-700 p-2 shadow-[0_0_60px_rgba(251,191,36,0.3)]",
+        inner: "border-4 border-amber-900/20",
+        label: "text-amber-200 font-serif italic"
+      };
+    } else if (frameType === 1) {
+      // Cyber Neon Frame
+      return {
+        outer: "bg-gradient-to-tr from-cyan-500 via-fuchsia-500 to-blue-500 p-1 animate-pulse shadow-[0_0_80px_rgba(192,38,211,0.4)]",
+        inner: "border border-white/20",
+        label: "text-cyan-300 font-mono uppercase tracking-widest"
+      };
+    } else {
+      // Modern Rose Minimal
+      return {
+        outer: "bg-gradient-to-tr from-rose-500 to-pink-500 p-1.5 shadow-[0_0_50px_rgba(225,29,72,0.4)]",
+        inner: "border-2 border-white/10",
+        label: "text-rose-100 font-sans font-light tracking-tight"
+      };
+    }
+  };
+
+  const frameStyles = getFrameStyles(currentIndex);
+
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-[#110d19] to-[#030712] flex flex-col items-center justify-center overflow-hidden z-[100] p-4">
-      <style>{`
-        @keyframes ken-burns {
-          0%, 100% { transform: scale(1.1) translate(0, 0); filter: brightness(1); }
-          50% { transform: scale(1.2) translate(3%, -3%); filter: brightness(1.1); }
-        }
-        .animate-ken-burns { animation: ken-burns 20s ease-in-out infinite; }
-      `}</style>
-      
-      <div className="absolute inset-0 transition-all duration-[2000ms] scale-125 blur-xl opacity-20">
-        <img
-          key={currentIndex}
-          src={displayImages[currentIndex]}
-          className="w-full h-full object-cover animate-ken-burns"
-          alt="Romantic backdrop"
-        />
+    <div className="fixed inset-0 bg-[#020617] flex items-center justify-center overflow-hidden z-[100] p-4 font-sans">
+      {/* Dynamic Background Blur */}
+      <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
+        <img src={displayImages[currentIndex]} className="w-full h-full object-cover" alt="" />
       </div>
       
-      <FloatingHearts count={30} />
-      
-      <div className="relative w-full max-w-lg z-10 flex flex-col items-center animate-in fade-in duration-1000 delay-300">
-        <div 
-          key={currentIndex}
-          className="relative bg-white p-4 pb-20 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.6)] rotate-[-3deg] hover:rotate-0 hover:scale-105 transition-transform duration-700 ease-out animate-in zoom-in-75 slide-in-from-bottom-10 duration-1000"
-        >
-          <div className="relative overflow-hidden aspect-square w-64 md:w-80 bg-slate-200">
-            <img 
-              src={displayImages[currentIndex]} 
-              className="w-full h-full object-cover"
-              alt="Memory"
-            />
-             <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent" />
-             <div className="absolute inset-0 ring-1 ring-black/10 ring-inset" />
+      <FloatingHearts count={20} />
+
+      <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center h-full">
+        {/* The Artistic Frame - Centered in the viewport */}
+        <div className={`relative group rounded-2xl transition-all duration-1000 transform hover:scale-105 ${frameStyles.outer}`}>
+          <div className="bg-slate-900 rounded-xl overflow-hidden shadow-2xl">
+            <div className={`relative overflow-hidden aspect-[3/4] w-64 md:w-80 ${frameStyles.inner}`}>
+              <img 
+                key={currentIndex}
+                src={displayImages[currentIndex]} 
+                className="w-full h-full object-cover animate-in fade-in zoom-in-105 duration-1000"
+                alt="Memory"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-60" />
+            </div>
+            
+            <div className="bg-white/5 backdrop-blur-md px-4 py-6 border-t border-white/10 flex flex-col items-center">
+               <span className={`text-2xl md:text-3xl transition-all duration-1000 ${frameStyles.label}`}>
+                 {partnerName} & {yourName}
+               </span>
+               <div className="mt-2 flex items-center gap-2">
+                 <div className="h-px w-8 bg-white/20" />
+                 <span className="text-white/40 text-[9px] font-bold tracking-[0.3em] uppercase">
+                   Frame {currentIndex + 1}
+                 </span>
+                 <div className="h-px w-8 bg-white/20" />
+               </div>
+            </div>
           </div>
-          <p className="absolute bottom-6 left-6 font-serif text-xl md:text-2xl text-slate-700 italic">
-            {partnerName} & {yourName}
-          </p>
         </div>
 
+        {/* Success Message Card - Positioned relative to the frame to keep overall layout balanced */}
         {showMessage && (
-          <div className="mt-12 p-8 bg-black/25 backdrop-blur-lg border border-white/5 rounded-[2rem] animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500 shadow-2xl text-center max-w-md">
-            <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-300 to-pink-400 mb-5 tracking-tight">
-              She Said Yes!
+          <div className="absolute top-[85%] md:top-[80%] p-6 md:p-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg">
+              Endless Love
+            </div>
+            <h2 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500 mb-2 tracking-tighter">
+              Always & Forever
             </h2>
-            <p className="text-rose-100/90 text-lg font-light italic leading-relaxed">
+            <p className="text-rose-100/70 text-sm md:text-base font-light leading-relaxed px-2">
               "{customMessage}"
             </p>
-            <div className="mt-8 flex justify-center gap-4">
-               <HeartSVG className="w-9 h-9 text-rose-400 animate-bounce" />
-               <HeartSVG className="w-9 h-9 text-rose-400 animate-bounce" style={{animationDelay: '150ms'}} />
+            <div className="mt-4 flex justify-center">
+               <HeartSVG className="w-8 h-8 text-rose-500 animate-heartbeat" />
             </div>
           </div>
         )}
       </div>
 
-      <button onClick={() => window.location.reload()} className="absolute bottom-8 text-rose-300/40 text-[9px] font-black tracking-[0.3em] uppercase hover:text-rose-300/80 transition-opacity z-[110]">
-        Restart
+      {/* Restart Button */}
+      <button onClick={() => window.location.reload()} className="absolute bottom-6 text-white/20 hover:text-rose-400 text-[10px] font-bold tracking-[0.5em] uppercase transition-all z-[110] border-b border-white/10 pb-1">
+        Begin New Chapter
       </button>
+
+      <style>{`
+        @keyframes heartbeat {
+          0% { transform: scale(1); }
+          14% { transform: scale(1.3); }
+          28% { transform: scale(1); }
+          42% { transform: scale(1.3); }
+          70% { transform: scale(1); }
+        }
+        .animate-heartbeat { animation: heartbeat 1.5s infinite; }
+      `}</style>
     </div>
   );
 };
 
-const HeartSVG = ({ className, style }: HeartSVGProps) => (
-  <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-  </svg>
-);
 
 const FloatingHearts = ({ count }: FloatingHeartsProps) => {
   const hearts = useMemo(() => Array.from({ length: count }).map((_, i) => ({
@@ -366,7 +415,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   );
 };
 
-const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount }: LivingButtonProps) => {
+const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount = 0 }: LivingButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -378,7 +427,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
   const [emotionCycle, setEmotionCycle] = useState(0);
   
   const isYes = type === 'yes';
-  const maxAttempts = 15;
+  const maxAttempts = 4;
 
   useEffect(() => {
     if (!isYes || isFinalState) return;
@@ -434,12 +483,12 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
         setMagneticOffset({ x: Math.cos(angle) * 20 * pull, y: Math.sin(angle) * 20 * pull });
       } else {
         const evasionRadius = Math.max(100, 220 - (teleports * 10));
-        if (dist < evasionRadius && teleports < maxAttempts) triggerEvasion();
+        if (dist < evasionRadius && rejectionCount < maxAttempts) triggerEvasion();
       }
     };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [teleports, isFinalState, isYes, mode]);
+  }, [teleports, isFinalState, isYes, mode, rejectionCount]);
 
   const getMood = () => {
     if (isFinalState) return 'broken';
@@ -448,24 +497,22 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
       const yesMoods = ['happy', 'beaming', 'blushing', 'partying', 'kissing'];
       return yesMoods[emotionCycle];
     }
-    if (teleports >= maxAttempts) return 'exhausted';
+    if (rejectionCount >= maxAttempts) return 'exhausted';
     if (mode) return 'astonished';
-    if (teleports > 12) return 'pensive';
-    if (teleports > 9) return 'pouting';
-    if (teleports > 6) return 'angry';
-    if (teleports > 3) return 'grimacing';
+    if (rejectionCount > 2) return 'pensive';
+    if (rejectionCount > 1) return 'pouting';
     return isHovered ? 'thinking' : 'neutral';
   };
 
   return (
     <div 
       className={`absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex flex-col items-center pointer-events-auto z-40
-        ${!isYes && teleports > 10 && teleports < maxAttempts ? 'animate-pant' : ''}`}
+        ${!isYes && rejectionCount > 3 && rejectionCount < maxAttempts ? 'animate-pant' : ''}`}
       style={{
         transform: `translate(calc(-50% + ${position.x + magneticOffset.x}px), calc(-50% + ${position.y + magneticOffset.y}px)) scale(${mode === 'tiny' ? 0.2 : 1})`,
         marginLeft: isYes ? (position.x === 0 ? '-120px' : '0') : (position.x === 0 ? '120px' : '0'),
         opacity: mode === 'ghost' ? 0.2 : 1,
-        cursor: (!isYes && teleports < maxAttempts) ? 'none' : 'pointer'
+        cursor: (!isYes && rejectionCount < maxAttempts) ? 'none' : 'pointer'
       }}
     >
       {speech && !isFinalState && (
