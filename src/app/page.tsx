@@ -1240,10 +1240,12 @@ const LivingButton = ({
     >
       {!isYes && (
         <div className={cn(
-          "absolute -top-6 text-center text-sm text-white/60 font-mono transition-opacity duration-300 whitespace-nowrap",
+          "absolute -top-14 text-center transition-opacity duration-300 whitespace-nowrap",
           note ? 'opacity-100' : 'opacity-0'
         )}>
-          {note}
+          <div className="rounded-md border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-mono text-white/70 shadow-lg backdrop-blur-sm">
+            {note}
+          </div>
         </div>
       )}
       <button
