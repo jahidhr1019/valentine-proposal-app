@@ -5,6 +5,9 @@ import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback } 
 import { Heart } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from '@/hooks/use-toast';
+import { generateCaption, GenerateCaptionOutput } from '@/ai/flows/generate-caption-flow';
+import { Button } from '@/components/ui/button';
 
 type ImageWithCaption = {
   src: string;
@@ -23,6 +26,7 @@ type LoveOdysseyProps = {
   userImages: ImageWithCaption[];
   partnerName: string;
   yourName: string;
+  message: string;
 };
 
 type SetupPageProps = {
@@ -173,14 +177,14 @@ const themeConfigs = {
 };
 
 const celebrationThemes = {
-  GALAXY: {
-    name: 'Galactic Odyssey',
-    bg: 'bg-[#020617]',
-    accent: 'text-cyan-400',
-    particle: '✨',
-    title: 'Across the Universe',
-    subtitle: 'Our love is written in the stars.',
-    font: 'font-galactic'
+  ROMANTIC: {
+    name: 'Romantic Celebration',
+    bg: 'bg-rose-900/10',
+    accent: 'text-rose-400',
+    particle: '❤️',
+    title: 'She Said Yes!',
+    subtitle: 'A new chapter begins.',
+    font: 'font-headline'
   },
   DISCO: {
     name: 'Disco Fever',
@@ -200,6 +204,60 @@ const celebrationThemes = {
     subtitle: "And I say, it's all right.",
     font: 'font-body'
   },
+  COSMIC: {
+    name: 'Cosmic Voyage',
+    bg: 'bg-[#020617]',
+    accent: 'text-cyan-400',
+    particle: '✨',
+    title: 'Across the Universe...',
+    subtitle: 'Our love is written in the stars.',
+    font: 'font-galactic'
+  },
+  RETRO: {
+    name: '8-Bit Love',
+    bg: 'bg-[#0f172a]',
+    accent: 'text-yellow-400',
+    particle: '👾',
+    title: 'LEVEL UP!',
+    subtitle: 'Player 2 Joined the Game.',
+    font: 'font-retro'
+  },
+  ROYAL: {
+    name: 'Royal Romance',
+    bg: 'bg-[#1e1b4b]',
+    accent: 'text-amber-400',
+    particle: '👑',
+    title: 'A Royal Decree',
+    subtitle: 'The Kingdom celebrates our union.',
+    font: 'font-headline'
+  },
+  ENCHANTED: {
+    name: 'Enchanted Forest',
+    bg: 'bg-[#064e3b]',
+    accent: 'text-emerald-300',
+    particle: '🌸',
+    title: 'Pure Magic',
+    subtitle: 'Our love blooms in every corner of the world.',
+    font: 'font-headline'
+  },
+  JAZZ: {
+    name: 'Midnight Jazz',
+    bg: 'bg-[#18181b]',
+    accent: 'text-yellow-600',
+    particle: '🎷',
+    title: 'The Perfect Note',
+    subtitle: 'Our harmony is a masterpiece.',
+    font: 'font-headline'
+  },
+  MATRIX: {
+    name: 'System Override',
+    bg: 'bg-black',
+    accent: 'text-green-500',
+    particle: '01',
+    title: 'LOVE_FOUND',
+    subtitle: 'Breaking the simulation, together.',
+    font: 'font-code'
+  }
 };
 
 
@@ -261,6 +319,7 @@ export default function Home() {
         userImages={setupData.images} 
         partnerName={setupData.partnerName}
         yourName={setupData.yourName}
+        message={setupData.message}
       />
     );
   }
@@ -424,7 +483,7 @@ const FallingBrokenHearts = ({ count }: FloatingHeartsProps) => {
 
 const CelebrationScreen = () => {
     const [mounted, setMounted] = useState(false);
-    const [theme, setTheme] = useState(celebrationThemes.GALAXY); // Default theme
+    const [theme, setTheme] = useState(celebrationThemes.COSMIC); // Default theme
 
     useEffect(() => {
         setMounted(true);
@@ -513,10 +572,11 @@ const ParticleExplosion = ({ particle, accent }: { particle: string; accent: str
 const LoveOdyssey = ({ 
   userImages, 
   partnerName, 
-  yourName 
+  yourName,
+  message
 }: LoveOdysseyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showMessage, setShowMessage] = useState(false);
+  const [showMessage, setShowMessage] = useState(true);
   
   const defaultCaptions = useMemo(() => [
     "Every moment with you is a treasure.",
@@ -539,7 +599,7 @@ const LoveOdyssey = ({
     const slideInterval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % displayImages.length);
     }, 4500);
-    setTimeout(() => setShowMessage(true), 1200);
+    
     return () => clearInterval(slideInterval);
   }, [displayImages.length]);
 
@@ -568,7 +628,12 @@ const LoveOdyssey = ({
 
   const frameStyles = getFrameStyles(currentIndex);
   const currentImage = displayImages[currentIndex];
-  const caption = currentImage.caption || defaultCaptions[currentIndex % defaultCaptions.length];
+  
+  const finalMessage = message || "Will you be my Valentine?";
+  
+  const caption = userImages.length > 0 
+    ? (currentImage.caption || defaultCaptions[currentIndex % defaultCaptions.length]) 
+    : finalMessage;
 
   return (
     <div className="fixed inset-0 bg-[#020617] flex items-center justify-center overflow-hidden z-[100] p-4 font-sans">
@@ -727,6 +792,9 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     theme: 'romantic'
   });
   const [mounted, setMounted] = useState(false);
+  const { toast } = useToast();
+  const [generatingCaptionIndex, setGeneratingCaptionIndex] = useState<number | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -759,6 +827,26 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     const newImages: ImageWithCaption[] = [...formData.images];
     newImages[idx].caption = text;
     setFormData({ ...formData, images: newImages });
+  };
+
+  const handleGenerateCaption = async (idx: number) => {
+    const image = formData.images[idx];
+    if (!image) return;
+
+    setGeneratingCaptionIndex(idx);
+    try {
+      const result: GenerateCaptionOutput = await generateCaption({ photoDataUri: image.src });
+      updateCaption(idx, result.caption);
+    } catch (error) {
+      console.error("Error generating caption:", error);
+      toast({
+        variant: "destructive",
+        title: "Caption Generation Failed",
+        description: "Could not generate a caption. Please try again.",
+      });
+    } finally {
+      setGeneratingCaptionIndex(null);
+    }
   };
 
   const isFormValid = formData.yourName && formData.partnerName;
@@ -845,7 +933,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
                         <span className="text-xs font-bold uppercase tracking-tighter">Del</span>
                       </button>
                     </div>
-                    <div className="flex-1 flex flex-col justify-center">
+                    <div className="flex-1 flex flex-col justify-center gap-2">
                       <input 
                         type="text" 
                         className="bg-transparent text-white text-xs outline-none border-b border-white/10 focus:border-rose-500/50 py-1 transition-all"
@@ -853,7 +941,14 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
                         onChange={(e) => updateCaption(i, e.target.value)}
                         placeholder="Add a caption..."
                       />
-                      <span className="text-[8px] text-white/20 uppercase mt-2 tracking-widest">Memory {i + 1}</span>
+                      <Button
+                        size="sm"
+                        className="text-xs h-auto py-1 px-2 bg-white/10 hover:bg-white/20 w-fit"
+                        onClick={() => handleGenerateCaption(i)}
+                        disabled={generatingCaptionIndex === i}
+                      >
+                        {generatingCaptionIndex === i ? 'Generating...' : '✨ Gen AI Caption'}
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -900,6 +995,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
           100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
         }
         .animate-float-up { animation: float-up linear infinite; }
+        .font-code { font-family: monospace; }
       `}</style>
     </div>
   );
@@ -1038,110 +1134,105 @@ const LivingButton = ({
 
   const triggerEvasion = useCallback(() => {
     if (isYes || isFinalState || isHeartbroken) return;
-
+  
     setIsFleeing(true);
-
+  
     const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
     const tactic = tactics[Math.floor(Math.random() * tactics.length)];
     setMode(tactic);
-
+  
     const noButton = buttonRef.current;
     const yesButton = document.getElementById('yes-button');
-
+  
     if (!noButton || !yesButton) {
+      setTimeout(() => {
+        setMode(null);
+        setIsFleeing(false);
+      }, 1000);
+      return;
+    }
+  
+    const maxAttempts = 50;
+    for (let i = 0; i < maxAttempts; i++) {
+      const padding = 120;
+      const nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
+      const ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
+  
+      const noButtonRect = noButton.getBoundingClientRect();
+      // Use getBoundingClientRect width/height which accounts for scaling
+      const noButtonWidth = noButtonRect.width;
+      const noButtonHeight = noButtonRect.height;
+  
+      const futureNoRect = {
+        left: window.innerWidth / 2 + nx - noButtonWidth / 2,
+        top: window.innerHeight / 2 + ny - noButtonHeight / 2,
+        right: window.innerWidth / 2 + nx + noButtonWidth / 2,
+        bottom: window.innerHeight / 2 + ny + noButtonHeight / 2,
+        width: noButtonWidth,
+        height: noButtonHeight,
+      } as DOMRect;
+  
+      const yesRect = yesButton.getBoundingClientRect();
+  
+      if (!checkOverlap(futureNoRect, yesRect)) {
+        setPosition({ x: nx, y: ny });
         setTimeout(() => {
           setMode(null);
           setIsFleeing(false);
         }, 1000);
         return;
+      }
     }
-
-    const maxAttempts = 50;
-    for (let i = 0; i < maxAttempts; i++) {
-        const padding = 120;
-        const nx = (Math.random() - 0.5) * (window.innerWidth - padding * 2);
-        const ny = (Math.random() - 0.5) * (window.innerHeight - padding * 2);
-
-        const noButtonRect = noButton.getBoundingClientRect();
-        const noButtonWidth = noButtonRect.width;
-        const noButtonHeight = noButtonRect.height;
-        
-        const futureNoRect = {
-            left: window.innerWidth / 2 + nx - noButtonWidth / 2,
-            top: window.innerHeight / 2 + ny - noButtonHeight / 2,
-            right: window.innerWidth / 2 + nx + noButtonWidth / 2,
-            bottom: window.innerHeight / 2 + ny + noButtonHeight / 2,
-            width: noButtonWidth,
-            height: noButtonHeight,
-        } as DOMRect;
-        
-        const yesRect = yesButton.getBoundingClientRect();
-
-        if (!checkOverlap(futureNoRect, yesRect)) {
-            setPosition({ x: nx, y: ny });
-            setTimeout(() => {
-              setMode(null);
-              setIsFleeing(false);
-            }, 1000);
-            return;
-        }
-    }
-    
+  
     console.warn("Could not find a non-overlapping position for 'No' button.");
     setTimeout(() => {
       setMode(null);
       setIsFleeing(false);
     }, 1000);
-
   }, [isYes, isFinalState, isHeartbroken]);
 
-  useEffect(() => {
-    const handleMove = (e: any) => {
-      if (!buttonRef.current || isFinalState || isHeartbroken) return;
+  const handleMove = useCallback((e: any) => {
+    if (!buttonRef.current || isFinalState || isHeartbroken) return;
 
-      const rect = buttonRef.current.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
-      const dist = Math.hypot(dx, dy);
-      const angle = Math.atan2(dy, dx);
+    const rect = buttonRef.current.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = e.clientX - cx;
+    const dy = e.clientY - cy;
+    const dist = Math.hypot(dx, dy);
+    const angle = Math.atan2(dy, dx);
 
-      setPupilPos({ x: Math.cos(angle) * 6, y: Math.sin(angle) * 6 });
+    setPupilPos({ x: Math.cos(angle) * 6, y: Math.sin(angle) * 6 });
 
-      if (isYes) {
-        if (dist < 150) {
-          const push = (150 - dist) * 0.15;
-          setDynamicOffset({ x: -Math.cos(angle) * push, y: -Math.sin(angle) * push });
-        } else {
-          setDynamicOffset({ x: 0, y: 0 });
-        }
+    if (isYes) {
+      if (dist < 150) {
+        const push = (150 - dist) * 0.15;
+        setDynamicOffset({ x: -Math.cos(angle) * push, y: -Math.sin(angle) * push });
       } else {
-        // Radius-based evasion trigger
-        if (dist < 150 && !isFleeing) {
-            triggerEvasion();
-        }
-
-        if (mode === 'newton' && dist < 250) {
-          const force = (250 - dist) * 0.4 / (noButtonScale || 1);
-          setDynamicOffset({ x: -Math.cos(angle) * force, y: -Math.sin(angle) * force });
-        }
-        else if (mode === 'blackhole' && dist < 300) {
-          const force = (300 - dist) * 0.3 / (noButtonScale || 1);
-          setDynamicOffset({ x: Math.cos(angle) * force, y: Math.sin(angle) * force });
-        } else if (mode !== 'newton' && mode !== 'blackhole') {
-          // ensure offset is cleared if not in a physics mode
-          if (dynamicOffset.x !== 0 || dynamicOffset.y !== 0) {
-            setDynamicOffset({x: 0, y: 0});
-          }
-        }
+        setDynamicOffset({ x: 0, y: 0 });
       }
-    };
+    } else {
+      if (dist < 150 && !isFleeing) {
+        triggerEvasion();
+      }
 
+      if (mode === 'newton' && dist < 250) {
+        const force = (250 - dist) * 0.4 / (noButtonScale || 1);
+        setDynamicOffset({ x: -Math.cos(angle) * force, y: -Math.sin(angle) * force });
+      } else if (mode === 'blackhole' && dist < 300) {
+        const force = (300 - dist) * 0.3 / (noButtonScale || 1);
+        setDynamicOffset({ x: Math.cos(angle) * force, y: Math.sin(angle) * force });
+      } else if (dynamicOffset.x !== 0 || dynamicOffset.y !== 0) {
+        setDynamicOffset({ x: 0, y: 0 });
+      }
+    }
+  }, [isYes, isFinalState, isHeartbroken, noButtonScale, isFleeing, mode, triggerEvasion, dynamicOffset.x, dynamicOffset.y]);
+
+  useEffect(() => {
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [isYes, isFinalState, isHeartbroken, noButtonScale, isFleeing, mode, dynamicOffset.x, dynamicOffset.y, triggerEvasion]);
-  
+  }, [handleMove]);
+
   const hasStartedFleeing = position.x !== 0 || position.y !== 0;
 
   return (
