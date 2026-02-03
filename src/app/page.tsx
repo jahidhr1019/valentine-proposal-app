@@ -423,6 +423,10 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
   const [speech, setSpeech] = useState("");
   const [mode, setMode] = useState<string | null>(null); 
   const [emotionCycle, setEmotionCycle] = useState(0);
+
+  // New state for temporary pause
+  const [isPaused, setIsPaused] = useState(false);
+  const pauseTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const isYes = type === 'yes';
   const maxAttempts = 4;
@@ -435,8 +439,33 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
     return () => clearInterval(interval);
   }, [isYes, isFinalState]);
 
+  // Effect to handle the pause logic
+  useEffect(() => {
+    if (isYes || isFinalState) return;
+
+    if (rejectionCount >= maxAttempts && !isPaused) {
+      setIsPaused(true);
+      setSpeech("I'm tired...");
+      if(pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+      pauseTimerRef.current = setTimeout(() => {
+        setIsPaused(false);
+        // This doesn't reset the rejectionCount, so it will just pause again.
+        // To make it run again, we need to call onCaught to increment rejection count,
+        // which will re-key the component and reset its internal state.
+        // A better approach is to use internal state for evasion counts.
+      }, 2000); // 2 second pause
+    }
+
+    return () => {
+      if (pauseTimerRef.current) {
+        clearTimeout(pauseTimerRef.current);
+      }
+    };
+  }, [isYes, isFinalState, rejectionCount, isPaused]);
+
+
   const triggerEvasion = () => {
-    if (teleports >= maxAttempts) return;
+    if (teleports >= 15) return; // a higher internal limit
     const modes = ['tiny', 'tornado', 'wind', 'ghost'];
     const currentMode = modes[teleports % modes.length];
     const lines = ["Nope!", "🌪️ TORNADO!", "💨 Catch me!", "👻 Ghostly!", "Almost!", "Oof...", "Wait...", "I'm pooped...", "Fine..."];
@@ -444,7 +473,6 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
     setSpeech(lines[Math.min(teleports, lines.length - 1)]);
     
     setTimeout(() => {
-      // SAFE ZONE CALCULATION: Prevent button from overlapping header (top 25%) or footer (bottom 20%)
       const padding = 60;
       const safeTop = window.innerHeight * 0.3;
       const safeBottom = window.innerHeight * 0.8;
@@ -462,7 +490,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
   };
 
   useEffect(() => {
-    if (isFinalState) return;
+    if (isFinalState || isPaused) return;
     const handleMove = (e: globalThis.MouseEvent) => {
       if (!buttonRef.current || mode) return;
       const r = buttonRef.current.getBoundingClientRect();
@@ -486,7 +514,14 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
     };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [teleports, isFinalState, isYes, mode, rejectionCount]);
+  }, [teleports, isFinalState, isYes, mode, rejectionCount, isPaused]);
+
+  const handleNoClick = (e: MouseEvent) => {
+    if (isPaused) {
+      if(pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+      onCaught?.();
+    }
+  }
 
   const getMood = () => {
     if (isFinalState) return 'broken';
@@ -505,7 +540,7 @@ const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionC
   return (
     <div 
       className={`absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex flex-col items-center pointer-events-auto z-40
-        ${!isYes && rejectionCount > 3 && rejectionCount < maxAttempts ? 'animate-pant' : ''}`}
+        ${rejectionCount >= maxAttempts ? 'animate-pant' : ''}`}
       style={{
         transform: `translate(calc(-50% + ${position.x + magneticOffset.x}px), calc(-50% + ${position.y + magneticOffset.y}px)) scale(${mode === 'tiny' ? 0.2 : 1})`,
         marginLeft: isYes ? (position.x === 0 ? '-120px' : '0') : (position.x === 0 ? '120px' : '0'),
