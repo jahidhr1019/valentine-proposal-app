@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback } from 'react';
@@ -78,13 +79,14 @@ export default function Home() {
   };
 
   const handleNoClicked = () => {
-    if (isHeartbroken) {
-      setIsHeartbroken(false);
-      // Increment rejection count to force re-mount of No button, resetting its internal state.
-      setRejectionCount(prev => prev + 1);
-      return;
-    }
+    if (isHeartbroken) return;
+
     setIsHeartbroken(true);
+
+    setTimeout(() => {
+        setIsHeartbroken(false);
+        setRejectionCount(prev => prev + 1);
+    }, 2500);
   };
 
   const handleYesClicked = (e?: MouseEvent) => {
@@ -130,16 +132,19 @@ export default function Home() {
     "My heart skips a beat for you",
     "Is this a 'yes' in disguise?",
     "I'll build you an empire!",
+    "Don't do this to me!",
+    "I'm nothing without you.",
+    "Last chance, I'm begging!",
   ];
   
   const currentTheme = themes[rejectionCount % themes.length];
 
   return (
-    <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30">
+    <div className={cn("fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30", isHeartbroken && "animate-shake")}>
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentTheme.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentTheme.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
-        <FloatingHearts count={250} />
+        {isHeartbroken ? <FallingBrokenHearts count={50} /> : <FloatingHearts count={250} />}
       </div>
 
       <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
@@ -169,7 +174,7 @@ export default function Home() {
             id="no-button"
             key={rejectionCount} 
             type="no" 
-            label={isHeartbroken ? "I reconsider..." : "NO"}
+            label={"NO"}
             onCaught={handleNoClicked} 
             isFinalState={isFinalState} 
             rejectionCount={rejectionCount}
@@ -196,6 +201,12 @@ export default function Home() {
           100% { background-position: 0% 50%; }
         }
         .animate-gradient-x { animation: gradient-x 4s ease infinite; }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+          20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
       `}</style>
     </div>
   );
@@ -206,6 +217,60 @@ const HeartSVG = ({ className }: HeartSVGProps) => (
     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
   </svg>
 );
+
+const BrokenHeartSVG = ({ className }: HeartSVGProps) => (
+  <div className={cn("relative", className)}>
+    <svg className="absolute inset-0" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09L12 5.18" transform="translate(-1, -1) rotate(-8 12 12)" />
+        <path d="M12 5.18L13.09 3.81C14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35" transform="translate(1, 1) rotate(8 12 12)" />
+    </svg>
+  </div>
+);
+
+const FallingBrokenHearts = ({ count }: FloatingHeartsProps) => {
+  const [hearts, setHearts] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHearts(
+        Array.from({ length: count }).map((_, i) => ({
+          id: i,
+          left: Math.random() * 100,
+          size: Math.random() * 20 + 10,
+          delay: Math.random() * 2,
+          duration: Math.random() * 3 + 2,
+        }))
+      );
+    }
+  }, [count]);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {hearts.map(h => (
+        <div key={h.id} className="absolute top-[-20%] animate-fall opacity-60"
+          style={{
+            left: `${h.left}%`,
+            width: `${h.size}px`,
+            height: `${h.size}px`,
+            animationDelay: `${h.delay}s`,
+            animationDuration: `${h.duration}s`,
+            color: '#444'
+          }}
+        >
+          <BrokenHeartSVG className="w-full h-full" />
+        </div>
+      ))}
+      <style>{`
+        @keyframes fall {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(120vh) rotate(720deg); opacity: 0; }
+        }
+        .animate-fall { animation: fall linear forwards; }
+      `}</style>
+    </div>
+  );
+};
+
 
 const CelebrationScreen = () => {
     const [mounted, setMounted] = useState(false);
@@ -871,7 +936,7 @@ const LivingButton = ({
     <button
       id={id}
       ref={buttonRef}
-      onClick={isYes ? onClick : onCaught}
+      onClick={isPaused && onCaught ? onCaught : (isYes ? onClick : undefined)}
       onMouseEnter={!isYes && !isPaused && !isHeartbroken ? triggerEvasion : undefined}
       style={{
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
@@ -886,7 +951,8 @@ const LivingButton = ({
         mode === 'ghost' && "opacity-20 blur-sm scale-125",
         mode === 'tiny' && "scale-0 opacity-0",
         mode === 'wind' && "skew-x-[45deg] blur-lg translate-x-[800px] opacity-0",
-        mode === 'glitch' && "animate-pulse skew-y-12 contrast-200 brightness-150"
+        mode === 'glitch' && "animate-pulse skew-y-12 contrast-200 brightness-150",
+        isHeartbroken && "opacity-50"
       )}
     >
       <div className="flex gap-1">
@@ -897,3 +963,5 @@ const LivingButton = ({
     </button>
   );
 };
+
+    
