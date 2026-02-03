@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, MouseEvent } from 'react';
@@ -37,8 +36,6 @@ type LivingButtonProps = {
   rejectionCount?: number;
   yesButtonScale: number;
   noButtonScale: number;
-  setYesButtonScale: React.Dispatch<React.SetStateAction<number>>;
-  setNoButtonScale: React.Dispatch<React.SetStateAction<number>>;
 };
 
 type HeartSVGProps = {
@@ -77,14 +74,10 @@ export default function Home() {
   };
 
   const handleNoClicked = () => {
-    if (rejectionCount < 4) {
-      setRejectionCount(prev => prev + 1);
-      setThemeIndex(prev => (prev + 1) % themes.length);
-      setYesButtonScale(prev => prev + 0.4);
-      setNoButtonScale(prev => Math.max(prev - 0.1, 0.5));
-    } else {
-       if (onCaught) onCaught();
-    }
+    setRejectionCount(prev => prev + 1);
+    setThemeIndex(prev => (prev + 1) % themes.length);
+    setYesButtonScale(prev => prev + 0.4);
+    setNoButtonScale(prev => Math.max(prev - 0.1, 0.5));
   };
 
   const handleYesClicked = (e?: MouseEvent) => {
@@ -95,12 +88,6 @@ export default function Home() {
     }, 800);
   };
   
-    const onCaught = () => {
-    setRejectionCount(prev => prev + 1);
-    setThemeIndex(prev => (prev + 1) % themes.length);
-  };
-
-
   if (!isStarted) {
     return <SetupPage onStart={handleStart} />;
   }
@@ -159,8 +146,6 @@ export default function Home() {
             isFinalState={isFinalState} 
             yesButtonScale={yesButtonScale}
             noButtonScale={noButtonScale}
-            setYesButtonScale={setYesButtonScale}
-            setNoButtonScale={setNoButtonScale}
           />
           <LivingButton 
             key={rejectionCount} 
@@ -171,8 +156,6 @@ export default function Home() {
             rejectionCount={rejectionCount}
             yesButtonScale={yesButtonScale}
             noButtonScale={noButtonScale}
-            setYesButtonScale={setYesButtonScale}
-            setNoButtonScale={setNoButtonScale}
           />
         </div>
       </div>
@@ -635,223 +618,151 @@ const Eye = ({ pos, mood }: { pos: {x: number, y: number}, mood: string }) => {
 };
 
 
-const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount = 0 }) => {
-  const buttonRef = React.useRef(null);
+const LivingButton = ({ 
+  type, 
+  label, 
+  onClick, 
+  onCaught, 
+  isFinalState, 
+  rejectionCount = 0,
+  yesButtonScale,
+  noButtonScale 
+}: LivingButtonProps) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dynamicOffset, setDynamicOffset] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-  const [teleports, setTeleports] = useState(0);
-  const [speech, setSpeech] = useState("");
-  const [mode, setMode] = useState(null);
+  const [mode, setMode] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const pauseTimerRef = React.useRef(null);
-  const [emotionCycle, setEmotionCycle] = useState(0);
-  const glitchIntervalRef = React.useRef(null);
 
   const isYes = type === 'yes';
-  const maxAttempts = 4;
 
-  useEffect(() => {
-    if (isYes || isFinalState) return;
-    const interval = setInterval(() => {
-      setEmotionCycle(prev => (prev + 1) % 5);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [isYes, isFinalState]);
-
-  const triggerEvasion = () => {
-    if (teleports >= 15 || isPaused) return;
-
-    const tactics = ['tiny', 'tornado', 'wind', 'ghost', 'newton', 'blackhole', 'glitch'];
-    const chosenTactic = tactics[Math.floor(Math.random() * tactics.length)];
-    
-    setMode(chosenTactic);
-    setSpeech("");
-
-    if (chosenTactic === 'glitch' && glitchIntervalRef.current === null) {
-      glitchIntervalRef.current = setInterval(() => {
-        const r = buttonRef.current?.getBoundingClientRect() || {x: 0, y: 0, width: 200, height: 150};
-        const glitchX = (Math.random() - 0.5) * 40;
-        const glitchY = (Math.random() - 0.5) * 40;
-        setPosition(prev => ({ x: prev.x + glitchX, y: prev.y + glitchY }));
-      }, 200);
-    } else if (chosenTactic !== 'glitch' && glitchIntervalRef.current) {
-        clearInterval(glitchIntervalRef.current);
-        glitchIntervalRef.current = null;
-    }
-
-    if (['tiny', 'tornado', 'wind', 'ghost'].includes(chosenTactic)) {
-      const padding = 60;
-      const safeTop = window.innerHeight * 0.3;
-      const safeBottom = window.innerHeight * 0.8;
-      let tx = (Math.random() * (window.innerWidth - padding * 3)) + padding;
-      let ty = (Math.random() * (safeBottom - safeTop)) + safeTop;
-      setPosition({ x: tx - (window.innerWidth / 2), y: ty - (window.innerHeight / 2) });
-    }
-    
-    setTeleports(t => t + 1);
-
-    setTimeout(() => {
-        if(chosenTactic !== 'glitch') setMode(null);
-    }, 1000); 
+  const getMood = () => {
+    if (isFinalState) return 'partying';
+    if (isYes) return 'beaming';
+    if (isPaused) return 'exhausted';
+    if (rejectionCount > 3) return 'pensive';
+    if (mode === 'glitch') return 'grimacing';
+    if (mode === 'tornado') return 'astonished';
+    return 'neutral';
   };
-  
+
   useEffect(() => {
-    if (isYes || isFinalState) return;
-    if (rejectionCount >= maxAttempts && !isPaused) {
-      setIsPaused(true);
-      setSpeech("I'm tired...");
-      setMode(null); // Stop current evasion
-      if (glitchIntervalRef.current) {
-        clearInterval(glitchIntervalRef.current);
-        glitchIntervalRef.current = null;
+    if (isYes) return;
+    if (rejectionCount > 3) {
+      if (!isPaused) {
+        setIsPaused(true);
+        const timer = setTimeout(() => {
+          setIsPaused(false);
+          if (buttonRef.current && !buttonRef.current.matches(':hover')) {
+             triggerEvasion(true);
+          }
+        }, 2000);
+        return () => clearTimeout(timer);
       }
-      if(pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
-      pauseTimerRef.current = setTimeout(() => {
-        setIsPaused(false);
-        setSpeech("...");
-        // After pause, if not caught, it runs away again.
-        if (buttonRef.current) {
-             triggerEvasion();
-        }
-      }, 2000);
+      return;
     }
-    return () => {
-      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
-      if (glitchIntervalRef.current) clearInterval(glitchIntervalRef.current);
-    };
-  }, [isYes, isFinalState, rejectionCount, isPaused]);
-
+  }, [isYes, rejectionCount, isPaused]);
 
   useEffect(() => {
-    if (isFinalState || isPaused) return;
-    
-    const handleMove = (e) => {
-      if (!buttonRef.current) return;
-      const r = buttonRef.current.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
+    const handleMove = (e: MouseEvent) => {
+      if (!buttonRef.current || isFinalState) return;
+
+      const rect = buttonRef.current.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
       const dx = e.clientX - cx;
       const dy = e.clientY - cy;
       const dist = Math.hypot(dx, dy);
       const angle = Math.atan2(dy, dx);
-      
-      setPupilPos({ x: Math.cos(angle) * 7, y: Math.sin(angle) * 7 });
 
-      let newOffset = { x: 0, y: 0 };
+      setPupilPos({ x: Math.cos(angle) * 6, y: Math.sin(angle) * 6 });
+
+      if (!isYes && !isPaused && rejectionCount <= 3 && dist < 100) {
+        triggerEvasion();
+      }
 
       if (isYes) {
-        const pullRadius = 350;
-        const pull = Math.max(0, 1 - dist / pullRadius); 
-        newOffset = { x: Math.cos(angle) * 20 * pull, y: Math.sin(angle) * 20 * pull };
-      } else {
-        if (mode === 'newton') {
-          const repelRadius = 250;
-          if (dist < repelRadius) {
-            const force = (1 - dist / repelRadius) * 25;
-            newOffset = { x: -Math.cos(angle) * force, y: -Math.sin(angle) * force };
-          }
-        } else if (mode === 'blackhole') {
-          const pullRadius = 400;
-          if (dist < pullRadius) {
-            const force = (1 - dist / pullRadius) * -30;
-            newOffset = { x: Math.cos(angle) * force, y: Math.sin(angle) * force };
-          }
-          if (dist < 20) { // Slip away
-            triggerEvasion();
-          }
+        if (dist < 150) {
+          const push = (150 - dist) * 0.2;
+          setDynamicOffset({ x: -Math.cos(angle) * push, y: -Math.sin(angle) * push });
         } else {
-          const evasionRadius = Math.max(100, 220 - (teleports * 10));
-          if (dist < evasionRadius && rejectionCount < maxAttempts && !mode) {
-             triggerEvasion();
-          }
+          setDynamicOffset({ x: 0, y: 0 });
+        }
+      } else {
+        if (isPaused) {
+            setDynamicOffset({ x: 0, y: 0 });
+            return;
+        }
+        if (mode === 'newton' && dist < 200) {
+          const force = (200 - dist) * 0.5;
+          setDynamicOffset({ x: -Math.cos(angle) * force, y: -Math.sin(angle) * force });
+        }
+        else if (mode === 'blackhole' && dist < 250) {
+          const force = (250 - dist) * 0.3;
+          setDynamicOffset({ x: Math.cos(angle) * force, y: Math.sin(angle) * force });
+          if (dist < 40) triggerEvasion();
+        }
+        else {
+          setDynamicOffset({ x: 0, y: 0 });
         }
       }
-      setDynamicOffset(newOffset);
     };
-    window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
-  }, [teleports, isFinalState, isYes, mode, rejectionCount, isPaused]);
 
-  const getMood = () => {
-    if (isFinalState) return 'broken';
-    if (isYes) {
-      if (isHovered) return 'heartEyes';
-      const yesMoods = ['happy', 'beaming', 'blushing', 'partying', 'kissing'];
-      return yesMoods[emotionCycle];
-    }
-    if (isPaused || rejectionCount >= maxAttempts) return 'exhausted';
-    if (mode === 'glitch') return 'astonished';
-    if (rejectionCount > 3) return 'pouting';
-    if (rejectionCount > 2) return 'angry';
-    if (rejectionCount > 1) return 'grimacing';
-    return isHovered ? 'thinking' : 'neutral';
+    window.addEventListener('mousemove', handleMove as any);
+    return () => window.removeEventListener('mousemove', handleMove as any);
+  }, [mode, isYes, isFinalState, isPaused, rejectionCount]);
+
+
+  const triggerEvasion = (force = false) => {
+    if (isYes || (isPaused && !force)) return;
+    
+    const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
+    const tactic = tactics[Math.floor(Math.random() * tactics.length)];
+    setMode(tactic);
+
+    const padding = 100;
+    const nx = (Math.random() - 0.5) * (window.innerWidth - padding);
+    const ny = (Math.random() - 0.5) * (window.innerHeight - padding);
+    setPosition({ x: nx, y: ny });
+
+    setTimeout(() => {
+        setDynamicOffset({x: 0, y: 0});
+        setMode(null)
+    }, 1500);
   };
   
-  const yesButtonScale = 1; // Placeholder
-  const noButtonScale = 1; // Placeholder
+  const handleMouseEnter = () => {
+    if (!isYes && !isPaused && rejectionCount <= 3) {
+      triggerEvasion();
+    }
+  }
 
   return (
-    <div 
-      className={`absolute top-1/2 left-1/2 transition-transform duration-300 ease-out flex flex-col items-center pointer-events-auto z-40
-        ${rejectionCount >= maxAttempts ? 'animate-pant' : ''}
-        ${mode === 'tornado' ? 'animate-spin' : ''}
-        ${mode === 'wind' ? 'skew-x-12' : ''}
-      `}
+    <button
+      ref={buttonRef}
+      onClick={isYes ? onClick : onCaught}
+      onMouseEnter={handleMouseEnter}
       style={{
-        transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), calc(-50% + ${position.y + dynamicOffset.y}px)) scale(${mode === 'tiny' ? 0.2 : (isYes ? yesButtonScale : noButtonScale)})`,
-        marginLeft: isYes ? (position.x === 0 ? '-150px' : '0') : (position.x === 0 ? '150px' : '0'),
-        opacity: mode === 'ghost' ? 0.2 : 1,
-        cursor: (!isYes && rejectionCount < maxAttempts && !isPaused) ? 'none' : 'pointer',
-        filter: mode === 'newton' ? 'drop-shadow(0 0 10px cyan)' : 'none',
+        transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
+                    calc(-50% + ${position.y + dynamicOffset.y}px)) 
+                    scale(${isYes ? yesButtonScale : noButtonScale})`,
       }}
-    >
-      {speech && !isFinalState && (
-        <div className="mb-4 bg-white text-black px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest animate-bounce shadow-xl">
-          {speech}
-        </div>
+      className={cn(
+        "absolute top-1/2 left-1/2 transition-all duration-300 ease-out flex items-center gap-4 px-8 py-4 rounded-full border-4 shadow-2xl z-50",
+        isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-200 border-slate-400 text-slate-800",
+        mode === 'tornado' && "animate-[spin_0.5s_linear_infinite]",
+        mode === 'ghost' && "opacity-20 blur-sm scale-150",
+        mode === 'tiny' && "scale-50 opacity-50",
+        mode === 'wind' && "skew-x-[30deg] blur-md translate-x-[500px] opacity-0",
+        mode === 'glitch' && "animate-pulse skew-y-12 contrast-200"
       )}
-
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={isYes ? onClick : (rejectionCount >= maxAttempts ? onCaught : undefined)}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => { setIsHovered(false); if (isYes) { setDynamicOffset({ x: 0, y: 0 }); } }}
-        className={`
-          relative flex flex-col items-center justify-center transition-all duration-300 active:scale-95 group
-          w-48 h-36 rounded-[2.5rem]
-          ${isYes
-            ? 'bg-rose-500 hover:bg-rose-600 text-white font-bold shadow-lg'
-            : 'bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold shadow-md'
-          }
-          ${isYes && isFinalState && "scale-[120] opacity-100 fixed inset-0 z-[60] rounded-none !m-0 !translate-x-0 !translate-y-0"}
-        `}
-      >
-        <div className={`flex gap-3 mb-3 scale-110 md:scale-125 transition-all duration-300 ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
-            <Eye pos={pupilPos} mood={getMood()} />
-            <Eye pos={pupilPos} mood={getMood()} />
-        </div>
-
-        <div className={`flex items-center gap-2 transition-opacity ${isFinalState ? 'opacity-0' : 'opacity-100'}`}>
-            {isYes && <Heart size={20} fill="white" />}
-            <span className={`font-black tracking-[0.2em] ${isYes ? 'text-xl' : 'text-lg'}`}>
-              {label}{isYes ? '!' : '...'}
-            </span>
-        </div>
-        {mode === 'blackhole' && <div className="absolute inset-0 rounded-[2.5rem] bg-black/30 animate-spin-slow" />}
-      </button>
-
-      <style>{`
-        @keyframes pant {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-3px); }
-        }
-        .animate-pant { animation: pant 0.2s infinite; }
-        .animate-spin-slow { animation: spin 2s linear infinite; }
-      `}</style>
-    </div>
+    >
+      <div className="flex gap-1">
+        <Eye pos={pupilPos} mood={getMood()} />
+        <Eye pos={pupilPos} mood={getMood()} />
+      </div>
+      <span className="text-2xl font-black italic">{label}</span>
+    </button>
   );
 };
-```
