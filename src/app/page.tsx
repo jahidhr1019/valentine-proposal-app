@@ -358,6 +358,37 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
   );
 };
 
+const FloatingBackground = () => {
+  const hearts = useMemo(() => Array.from({ length: 20 }).map((_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    size: Math.random() * 20 + 10,
+    delay: Math.random() * 10,
+    duration: Math.random() * 15 + 10,
+    opacity: Math.random() * 0.3 + 0.05
+  })), []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      {hearts.map(h => (
+        <div
+          key={h.id}
+          className="absolute bottom-[-10%] animate-float-up text-rose-500/40"
+          style={{
+            left: `${h.left}%`,
+            width: `${h.size}px`,
+            opacity: h.opacity,
+            animationDelay: `${h.delay}s`,
+            animationDuration: `${h.duration}s`,
+          }}
+        >
+          <HeartSVG className="w-full h-full" />
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const SetupPage = ({ onStart }: SetupPageProps) => {
   const [formData, setFormData] = useState<SetupData>({ 
     yourName: '', 
@@ -372,7 +403,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        if(ev.target?.result) {
+        if (ev.target?.result) {
             setFormData(prev => ({ 
               ...prev, 
               images: [...prev.images, { src: ev.target.result as string, caption: "" }] 
@@ -391,7 +422,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   };
 
   const updateCaption = (idx: number, text: string) => {
-    const newImages = [...formData.images];
+    const newImages: ImageWithCaption[] = [...formData.images];
     newImages[idx].caption = text;
     setFormData({ ...formData, images: newImages });
   };
@@ -399,8 +430,10 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   const isFormValid = formData.yourName && formData.partnerName;
 
   return (
-    <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden">
-      {/* Dynamic Background Elements */}
+    <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden relative">
+      <FloatingBackground />
+
+      {/* Dynamic Glow Elements */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-900/10 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[120px] animate-pulse delay-700" />
@@ -521,13 +554,23 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+        
+        @keyframes float-up {
+          0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+          10% { opacity: inherit; }
+          90% { opacity: inherit; }
+          100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+        }
+        .animate-float-up {
+          animation: float-up linear infinite;
+        }
       `}</style>
     </div>
   );
 };
 
 
-const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount = 0 }: LivingButtonProps) => {
+const LivingButton = ({ type, label, onClick, onCaught, isFinalState, rejectionCount }: LivingButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
