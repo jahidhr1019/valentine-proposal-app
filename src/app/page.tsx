@@ -31,12 +31,13 @@ type LivingButtonProps = {
   type: 'yes' | 'no';
   label: string;
   onClick?: (e?: MouseEvent) => void;
-  onCaught?: () => void;
+  onCaught?: (e?: MouseEvent) => void;
   isFinalState: boolean;
   rejectionCount?: number;
   yesButtonScale: number;
   noButtonScale: number;
   id?: string;
+  isHeartbroken?: boolean;
 };
 
 type HeartSVGProps = {
@@ -69,6 +70,7 @@ export default function Home() {
   const [themeIndex, setThemeIndex] = useState(0);
   const [yesButtonScale, setYesButtonScale] = useState(1);
   const [noButtonScale, setNoButtonScale] = useState(1);
+  const [isHeartbroken, setIsHeartbroken] = useState(false);
 
   const handleStart = (data: SetupData) => {
     setSetupData(data);
@@ -76,11 +78,13 @@ export default function Home() {
   };
 
   const handleNoClicked = () => {
-    const newRejectionCount = rejectionCount + 1;
-    setRejectionCount(newRejectionCount);
-    setThemeIndex(prev => (prev + 1) % themes.length);
-    setYesButtonScale(prev => prev + 0.4);
-    setNoButtonScale(prev => Math.max(prev - 0.1, 0.5));
+    if (isHeartbroken) {
+      setIsHeartbroken(false);
+      // Increment rejection count to force re-mount of No button, resetting its internal state.
+      setRejectionCount(prev => prev + 1);
+      return;
+    }
+    setIsHeartbroken(true);
   };
 
   const handleYesClicked = (e?: MouseEvent) => {
@@ -128,7 +132,7 @@ export default function Home() {
     "I'll build you an empire!",
   ];
   
-  const currentTheme = themes[themeIndex];
+  const currentTheme = themes[rejectionCount % themes.length];
 
   return (
     <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30">
@@ -141,7 +145,7 @@ export default function Home() {
       <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
         <h1 className="text-5xl md:text-8xl font-black mb-4 tracking-tighter text-white drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]">
           {setupData.partnerName}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-rose-600 to-pink-500 bg-[length:200%_auto] animate-gradient-x">
-            {mainMessages[rejectionCount % mainMessages.length]}
+            {isHeartbroken ? "Is this really goodbye?" : mainMessages[rejectionCount % mainMessages.length]}
           </span>
         </h1>
         <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">
@@ -159,17 +163,19 @@ export default function Home() {
             isFinalState={isFinalState} 
             yesButtonScale={yesButtonScale}
             noButtonScale={noButtonScale}
+            isHeartbroken={isHeartbroken}
           />
           <LivingButton
             id="no-button"
             key={rejectionCount} 
             type="no" 
-            label="NO"
+            label={isHeartbroken ? "I reconsider..." : "NO"}
             onCaught={handleNoClicked} 
             isFinalState={isFinalState} 
             rejectionCount={rejectionCount}
             yesButtonScale={yesButtonScale}
             noButtonScale={noButtonScale}
+            isHeartbroken={isHeartbroken}
           />
         </div>
       </div>
@@ -721,7 +727,8 @@ const LivingButton = ({
   rejectionCount = 0,
   yesButtonScale,
   noButtonScale,
-  id
+  id,
+  isHeartbroken,
 }: LivingButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
@@ -744,6 +751,7 @@ const LivingButton = ({
   };
 
   const getMood = () => {
+    if (isHeartbroken) return 'pensive';
     if (isFinalState) return isYes ? 'partying' : 'broken';
     if (isYes) {
         return (dynamicOffset.x !== 0 || dynamicOffset.y !== 0) ? 'blushing' : 'beaming';
@@ -756,17 +764,18 @@ const LivingButton = ({
   };
 
   const triggerEvasion = useCallback(() => {
-    if (isYes || isPaused || isFinalState || mode) return;
+    if (isYes || isPaused || isFinalState || mode || isHeartbroken) return;
 
-    if (rejectionCount && rejectionCount > 0 && rejectionCount % 5 === 0 && evasionCount < 5) {
+    if (rejectionCount && rejectionCount > 0 && evasionCount >= 5) {
         setIsPaused(true);
         setTimeout(() => {
             setIsPaused(false);
-        }, 1000);
+            setEvasionCount(0); // Reset for the next cycle
+        }, 1000); // Pause for 1 second
         return; 
     }
     
-    setEvasionCount(prev => (prev + 1) % 5);
+    setEvasionCount(prev => prev + 1);
 
     const tactics = ['tornado', 'wind', 'tiny', 'ghost', 'newton', 'blackhole', 'glitch'];
     const tactic = tactics[Math.floor(Math.random() * tactics.length)];
@@ -812,11 +821,11 @@ const LivingButton = ({
     console.warn("Could not find a non-overlapping position for 'No' button.");
     setTimeout(() => setMode(null), 1000);
 
-  }, [isYes, isPaused, isFinalState, evasionCount, mode, noButtonScale, rejectionCount]);
+  }, [isYes, isPaused, isFinalState, evasionCount, mode, noButtonScale, rejectionCount, isHeartbroken]);
 
   useEffect(() => {
     const handleMove = (e: any) => {
-      if (!buttonRef.current || isFinalState) return;
+      if (!buttonRef.current || isFinalState || isHeartbroken) return;
 
       const rect = buttonRef.current.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
@@ -856,14 +865,14 @@ const LivingButton = ({
 
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [mode, isYes, isFinalState, noButtonScale, triggerEvasion, isPaused]);
+  }, [mode, isYes, isFinalState, noButtonScale, triggerEvasion, isPaused, isHeartbroken]);
 
   return (
     <button
       id={id}
       ref={buttonRef}
       onClick={isYes ? onClick : onCaught}
-      onMouseEnter={!isYes && !isPaused && evasionCount < 5 ? triggerEvasion : undefined}
+      onMouseEnter={!isYes && !isPaused && !isHeartbroken ? triggerEvasion : undefined}
       style={{
         transform: `translate(calc(-50% + ${position.x + dynamicOffset.x}px), 
                     calc(-50% + ${position.y + dynamicOffset.y}px)) 
