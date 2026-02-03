@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "seedId": 101,
+      "width": 600,
+      "height": 800,
+      "hint": "couple smiling"
+    },
+    {
+      "seedId": 102,
+      "width": 600,
+      "height": 800,
+      "hint": "holding hands"
+    },
+    {
+      "seedId": 103,
+      "width": 600,
+      "height": 800,
+      "hint": "romantic sunset"
+    }
+  ]
 }

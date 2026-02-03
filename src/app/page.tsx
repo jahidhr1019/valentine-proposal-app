@@ -8,10 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from '@/hooks/use-toast';
 import { generateCaption, GenerateCaptionOutput } from '@/ai/flows/generate-caption-flow';
 import { Button } from '@/components/ui/button';
+import placeholderImagesData from '@/lib/placeholder-images.json';
 
 type ImageWithCaption = {
   src: string;
   caption: string;
+  "data-ai-hint"?: string;
 };
 
 type SetupData = {
@@ -623,20 +625,35 @@ const LoveOdyssey = ({
   ], []);
 
   const displayImages = useMemo(() => {
-    return userImages.length > 0 ? userImages : [
-      { src: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200", caption: "" },
-      { src: "https://images.unsplash.com/photo-1516589174184-c685266e4871?q=80&w=1200", caption: "" },
-      { src: "https://images.unsplash.com/photo-1494774157365-9e04c6720e47?q=80&w=1200", caption: "" }
-    ];
+    if (userImages.length > 0) {
+        return userImages;
+    }
+    const { placeholderImages } = placeholderImagesData;
+    return placeholderImages.map(p => ({
+        src: `https://picsum.photos/seed/${p.seedId}/${p.width}/${p.height}`,
+        caption: "",
+        "data-ai-hint": p.hint,
+    }));
   }, [userImages]);
 
   useEffect(() => {
+    if (displayImages.length === 0) return;
     const slideInterval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % displayImages.length);
     }, 4500);
     
     return () => clearInterval(slideInterval);
   }, [displayImages.length]);
+
+  if (displayImages.length === 0) {
+    // This can happen briefly if userImages is cleared.
+    // Or if placeholder data is not available.
+    return (
+        <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center text-white">
+            Loading memories...
+        </div>
+    )
+  }
 
   const getFrameStyles = (index: number) => {
     const frameType = index % 3;
@@ -670,7 +687,7 @@ const LoveOdyssey = ({
     <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center overflow-hidden z-[100] p-4 font-sans">
       <FloatingHearts count={250} />
       <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
-        <img src={displayImages[currentIndex].src} className="w-full h-full object-cover" alt="" />
+        <img src={currentImage.src} className="w-full h-full object-cover" alt="" />
       </div>
       
       <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center gap-6">
@@ -679,9 +696,10 @@ const LoveOdyssey = ({
             <div className={`relative overflow-hidden aspect-[3/4] w-64 md:w-80 ${frameStyles.inner}`}>
               <img 
                 key={currentIndex}
-                src={displayImages[currentIndex].src} 
+                src={currentImage.src} 
                 className="w-full h-full object-cover animate-in fade-in zoom-in-105 duration-1000"
                 alt="Memory"
+                data-ai-hint={currentImage['data-ai-hint']}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-60" />
             </div>
@@ -733,7 +751,7 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
           left: Math.random() * 100,
           size: Math.random() * 25 + 15,
           delay: Math.random() * 5,
-          duration: Math.random() * 4 + 4,
+          duration: Math.random() * 2 + 2,
         }))
       );
     }
@@ -759,8 +777,8 @@ const FloatingHearts = ({ count }: FloatingHeartsProps) => {
       <style>{`
         @keyframes float {
           0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-          10% { opacity: 0.6; }
-          90% { opacity: 0.6; }
+          10% { opacity: 0.8; }
+          90% { opacity: 0.8; }
           100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
         }
         .animate-float { animation: float linear infinite; }
