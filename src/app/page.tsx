@@ -828,7 +828,7 @@ const LoveOdyssey = ({
             onClick={copyLinkToClipboard}
             className="bg-white/10 text-white backdrop-blur-xl border border-white/10 hover:bg-white/20"
           >
-            <Copy className="mr-2" />
+            <Copy className="mr-2 h-4 w-4" />
             Copy Shareable Link
           </Button>
         </div>
