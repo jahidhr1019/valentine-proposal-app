@@ -685,15 +685,15 @@ const LoveOdyssey = ({
   ], []);
 
   const displayImages = useMemo(() => {
-    if (userImages.length > 0) {
-        return userImages;
+    let images = userImages;
+    if (images.length === 0) {
+      images = placeholderImagesData.placeholderImages.map(p => ({
+          src: p.src,
+          caption: "",
+          "data-ai-hint": p.hint,
+      }));
     }
-    const { placeholderImages } = placeholderImagesData;
-    return placeholderImages.map(p => ({
-        src: p.src,
-        caption: "",
-        "data-ai-hint": p.hint,
-    }));
+    return images.map(image => ({...image, src: encodeURI(image.src)}));
   }, [userImages]);
 
   useEffect(() => {
@@ -1082,7 +1082,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Your Proposal Question (and final caption)</label>
+              <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Your Proposal Question</label>
               <textarea 
                 className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white h-24 resize-none outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
                 placeholder="Will you be my Valentine?" 
