@@ -747,7 +747,7 @@ const LoveOdyssey = ({
     <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center overflow-hidden z-[100] p-4 font-sans">
       <FloatingHearts count={250} />
       <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
-        <img src={encodeURI(currentImage.src)} className="w-full h-full object-cover" alt="" />
+        <img src={currentImage.src} className="w-full h-full object-cover" alt="" />
       </div>
       
       <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center gap-6">
@@ -756,7 +756,7 @@ const LoveOdyssey = ({
             <div className={cn("relative overflow-hidden aspect-[3/4] w-64 md:w-80", frameStyles.inner)}>
               <img 
                 key={currentIndex}
-                src={encodeURI(currentImage.src)} 
+                src={currentImage.src} 
                 className="w-full h-full object-cover animate-in fade-in zoom-in-105 duration-1000"
                 alt="Memory"
                 data-ai-hint={currentImage['data-ai-hint']}
@@ -1429,6 +1429,3 @@ const LivingButton = ({
     </div>
   );
 };
-
-
-
