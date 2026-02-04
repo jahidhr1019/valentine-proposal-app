@@ -691,7 +691,7 @@ const LoveOdyssey = ({
     }
     const { placeholderImages } = placeholderImagesData;
     return placeholderImages.map(p => ({
-        src: `https://source.unsplash.com/${p.width}x${p.height}/?${p.hint.replace(/ /g, ',')}`,
+        src: `https://picsum.photos/seed/${p.seedId}/${p.width}/${p.height}`,
         caption: "",
         "data-ai-hint": p.hint,
     }));
@@ -752,9 +752,9 @@ const LoveOdyssey = ({
       </div>
       
       <div className="relative w-full max-w-lg z-10 flex flex-col items-center justify-center gap-6">
-        <div className={`relative group rounded-2xl transition-all duration-1000 transform hover:scale-105 ${frameStyles.outer}`}>
+        <div className={cn("relative group rounded-2xl transition-all duration-1000 transform hover:scale-105", frameStyles.outer)}>
           <div className="bg-slate-900 rounded-xl overflow-hidden shadow-2xl">
-            <div className={`relative overflow-hidden aspect-[3/4] w-64 md:w-80 ${frameStyles.inner}`}>
+            <div className={cn("relative overflow-hidden aspect-[3/4] w-64 md:w-80", frameStyles.inner)}>
               <img 
                 key={currentIndex}
                 src={currentImage.src} 
@@ -766,7 +766,7 @@ const LoveOdyssey = ({
             </div>
             
             <div className="bg-white/5 backdrop-blur-md px-4 py-3 md:py-4 border-t border-white/10 flex flex-col items-center">
-               <span className={`text-xl md:text-2xl transition-all duration-1000 ${frameStyles.label}`}>
+               <span className={cn("text-xl md:text-2xl transition-all duration-1000", frameStyles.label)}>
                  {partnerName} & {yourName}
                </span>
                <div className="mt-2 flex items-center gap-2">
