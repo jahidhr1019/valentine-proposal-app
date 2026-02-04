@@ -7,7 +7,6 @@ import { Heart } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { generateCaption, GenerateCaptionOutput } from '@/ai/flows/generate-caption-flow';
 import { Button } from '@/components/ui/button';
 import placeholderImagesData from '@/lib/placeholder-images.json';
 
@@ -898,7 +897,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   });
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
-  const [generatingCaptionIndex, setGeneratingCaptionIndex] = useState<number | null>(null);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
   useEffect(() => {
@@ -933,26 +931,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     const newImages: ImageWithCaption[] = [...formData.images];
     newImages[idx].caption = text;
     setFormData({ ...formData, images: newImages });
-  };
-
-  const handleGenerateCaption = async (idx: number) => {
-    const image = formData.images[idx];
-    if (!image) return;
-
-    setGeneratingCaptionIndex(idx);
-    try {
-      const result: GenerateCaptionOutput = await generateCaption({ photoDataUri: image.src });
-      updateCaption(idx, result.caption);
-    } catch (error) {
-      console.error("Error generating caption:", error);
-      toast({
-        variant: "destructive",
-        title: "Caption Generation Failed",
-        description: "Could not generate a caption. Please try again.",
-      });
-    } finally {
-      setGeneratingCaptionIndex(null);
-    }
   };
 
   const isFormValid = formData.yourName && formData.partnerName;
@@ -1135,14 +1113,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
                         onChange={(e) => updateCaption(i, e.target.value)}
                         placeholder="Add a caption..."
                       />
-                      <Button
-                        size="sm"
-                        className="text-xs h-auto py-1 px-2 bg-white/10 hover:bg-white/20 w-fit"
-                        onClick={() => handleGenerateCaption(i)}
-                        disabled={generatingCaptionIndex === i}
-                      >
-                        {generatingCaptionIndex === i ? 'Generating...' : '✨ Gen AI Caption'}
-                      </Button>
                     </div>
                   </div>
                 ))}
@@ -1459,4 +1429,5 @@ const LivingButton = ({
     </div>
   );
 };
+
 
