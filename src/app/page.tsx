@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Heart } from 'lucide-react';
+import { Heart, Copy } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
@@ -29,10 +29,11 @@ type LoveOdysseyProps = {
   userImages: ImageWithCaption[];
   partnerName: string;
   yourName: string;
+  generatedLink: string | null;
 };
 
 type SetupPageProps = {
-  onStart: (data: SetupData) => void;
+  onStart: (data: SetupData, link: string | null) => void;
 };
 
 type LivingButtonProps = {
@@ -339,15 +340,17 @@ function Home() {
   const [yesButtonScale, setYesButtonScale] = useState(1);
   const [noButtonScale, setNoButtonScale] = useState(1);
   const [isHeartbroken, setIsHeartbroken] = useState(false);
+  const [generatedLinkForPreview, setGeneratedLinkForPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialData) {
-      handleStart(initialData);
+      handleStart(initialData, null);
     }
   }, [initialData]);
 
-  const handleStart = (data: SetupData) => {
+  const handleStart = (data: SetupData, link: string | null) => {
     setSetupData(data);
+    setGeneratedLinkForPreview(link);
     setIsStarted(true);
   };
 
@@ -395,6 +398,7 @@ function Home() {
         userImages={setupData.images} 
         partnerName={setupData.partnerName}
         yourName={setupData.yourName}
+        generatedLink={generatedLinkForPreview}
       />
     );
   }
@@ -685,10 +689,21 @@ const BeatingHeartCanvas = () => {
 const LoveOdyssey = ({ 
   userImages, 
   partnerName, 
-  yourName
+  yourName,
+  generatedLink
 }: LoveOdysseyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMessage, setShowMessage] = useState(true);
+  const { toast } = useToast();
+
+  const copyLinkToClipboard = () => {
+    if (!generatedLink) return;
+    navigator.clipboard.writeText(generatedLink);
+    toast({
+      title: "Link Copied!",
+      description: "You can now share this magical moment."
+    });
+  };
   
   const defaultCaptions = useMemo(() => [
     "Every moment with you is a treasure.",
@@ -806,6 +821,18 @@ const LoveOdyssey = ({
           </div>
         )}
       </div>
+
+      {generatedLink && (
+        <div className="absolute bottom-8 z-20 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-1000 fill-mode-forwards opacity-0">
+          <Button 
+            onClick={copyLinkToClipboard}
+            className="bg-white/10 text-white backdrop-blur-xl border border-white/10 hover:bg-white/20"
+          >
+            <Copy className="mr-2" />
+            Copy Shareable Link
+          </Button>
+        </div>
+      )}
 
       <style>{`
         /* Heartbeat animation is now handled by the canvas component */
@@ -1017,7 +1044,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
               </div>
 
               <button 
-                onClick={() => onStart(formData)}
+                onClick={() => onStart(formData, generatedLink)}
                 className="w-full group/btn relative overflow-hidden py-6 rounded-2xl md:rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500 bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95"
               >
                 <div className="relative z-10 flex items-center justify-center gap-3">
