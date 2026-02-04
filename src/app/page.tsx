@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import placeholderImagesData from '@/lib/placeholder-images.json';
+import pako from 'pako';
 
 type ImageWithCaption = {
   src: string;
@@ -55,13 +56,26 @@ type FloatingHeartsProps = {
   count: number;
 };
 
-// Functions to safely encode and decode Unicode strings to/from Base64
-function utoa(str: string): string {
-    return window.btoa(unescape(encodeURIComponent(str)));
+// Functions to safely encode and decode data
+// Helper to convert Uint8Array to a Base64 string
+function uint8ArrayToBase64(uint8array: Uint8Array): string {
+  let binary = '';
+  const len = uint8array.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(uint8array[i]);
+  }
+  return window.btoa(binary);
 }
 
-function atou(str: string): string {
-    return decodeURIComponent(escape(window.atob(str)));
+// Helper to convert a Base64 string to a Uint8Array
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binary_string = window.atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes;
 }
 
 
@@ -294,8 +308,9 @@ function Home() {
     const dataParam = searchParams.get('data');
     if (dataParam) {
       try {
-        const decodedJson = atou(dataParam);
-        const parsedData = JSON.parse(decodedJson);
+        const compressedData = base64ToUint8Array(dataParam);
+        const decompressedJson = pako.inflate(compressedData, { to: 'string' });
+        const parsedData = JSON.parse(decompressedJson);
         setInitialData(parsedData);
       } catch (error) {
         console.error("Failed to parse proposal data from URL:", error);
@@ -939,8 +954,9 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     if (!isFormValid) return;
     try {
       const jsonString = JSON.stringify(formData);
-      const encodedData = utoa(jsonString);
-      const link = `${window.location.origin}${window.location.pathname}?data=${encodeURIComponent(encodedData)}`;
+      const compressedData = pako.deflate(jsonString);
+      const base64Data = uint8ArrayToBase64(compressedData);
+      const link = `${window.location.origin}${window.location.pathname}?data=${encodeURIComponent(base64Data)}`;
       setGeneratedLink(link);
     } catch (e) {
       console.error(e);
