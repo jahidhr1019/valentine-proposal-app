@@ -940,7 +940,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     try {
       const jsonString = JSON.stringify(formData);
       const encodedData = utoa(jsonString);
-      const link = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+      const link = `${window.location.origin}${window.location.pathname}?data=${encodeURIComponent(encodedData)}`;
       setGeneratedLink(link);
     } catch (e) {
       console.error(e);
