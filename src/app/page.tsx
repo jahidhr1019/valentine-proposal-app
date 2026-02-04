@@ -700,15 +700,16 @@ const LoveOdyssey = ({
   ], []);
 
   const displayImages = useMemo(() => {
-    let images = userImages;
-    if (images.length === 0) {
-      images = placeholderImagesData.placeholderImages.map(p => ({
-          src: p.src,
-          caption: "",
-          "data-ai-hint": p.hint,
-      }));
+    if (userImages && userImages.length > 0) {
+      return userImages;
     }
-    return images.map(image => ({...image, src: encodeURI(image.src)}));
+    
+    // Fallback to placeholder images if no user images are provided
+    return placeholderImagesData.placeholderImages.map(p => ({
+        src: p.src,
+        caption: "",
+        "data-ai-hint": p.hint,
+    }));
   }, [userImages]);
 
   useEffect(() => {
