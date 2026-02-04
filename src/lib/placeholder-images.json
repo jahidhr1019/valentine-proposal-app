@@ -1,75 +1,52 @@
+
 {
   "placeholderImages": [
     {
-      "seedId": 101,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo1.jpg",
       "hint": "couple smiling"
     },
     {
-      "seedId": 102,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo2.jpg",
       "hint": "holding hands"
     },
     {
-      "seedId": 103,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo3.jpg",
       "hint": "romantic sunset"
     },
     {
-      "seedId": 104,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo4.jpg",
       "hint": "couple laughing"
     },
     {
-      "seedId": 105,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo5.jpg",
       "hint": "beach walk"
     },
     {
-      "seedId": 106,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo6.jpg",
       "hint": "city lights"
     },
     {
-      "seedId": 107,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo7.jpg",
       "hint": "cozy cabin"
     },
     {
-      "seedId": 108,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo8.jpg",
       "hint": "mountain hike"
     },
     {
-      "seedId": 109,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo9.jpg",
       "hint": "dancing kitchen"
     },
     {
-      "seedId": 110,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo10.jpg",
       "hint": "park picnic"
     },
     {
-      "seedId": 111,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo11.jpg",
       "hint": "stargazing"
     },
     {
-      "seedId": 112,
-      "width": 600,
-      "height": 800,
+      "src": "/images/photo12.jpg",
       "hint": "rainy day"
     }
   ]
