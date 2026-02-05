@@ -1499,14 +1499,18 @@ const LivingButton = ({
     }, 1000);
   }, [isYes, isFinalState, isHeartbroken]);
 
-  const handleMove = useCallback((e: any) => {
+  const handlePointerMove = useCallback((e: any) => {
     if (!buttonRef.current || isFinalState || isHeartbroken) return;
 
     const rect = buttonRef.current.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    const dx = e.clientX - cx;
-    const dy = e.clientY - cy;
+    
+    const pointerX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    const pointerY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+    const dx = pointerX - cx;
+    const dy = pointerY - cy;
     const dist = Math.hypot(dx, dy);
     const angle = Math.atan2(dy, dx);
 
@@ -1537,9 +1541,13 @@ const LivingButton = ({
   }, [isYes, isFinalState, isHeartbroken, noButtonScale, isFleeing, mode, triggerEvasion, dynamicOffset.x, dynamicOffset.y]);
 
   useEffect(() => {
-    window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
-  }, [handleMove]);
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('touchmove', handlePointerMove);
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('touchmove', handlePointerMove);
+    };
+  }, [handlePointerMove]);
 
   const hasStartedFleeing = position.x !== 0 || position.y !== 0;
 
@@ -1747,6 +1755,7 @@ const ConstellationCanvas = () => {
       animationFrameId = requestAnimationFrame(animate);
     };
 
+    init();
     animate();
     return () => {
       window.removeEventListener('resize', handleResize);
