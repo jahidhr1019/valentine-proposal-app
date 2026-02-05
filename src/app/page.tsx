@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Heart, Copy, UploadCloud, X } from 'lucide-react';
+import { Heart, Copy, UploadCloud, X, Link as LinkIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
@@ -967,6 +967,54 @@ const FloatingBackground = () => {
   );
 };
 
+const ShareView = ({ link, onPreview, onCopy, onCreateAnother }: { link: string; onPreview: () => void; onCopy: () => void; onCreateAnother: () => void; }) => {
+    return (
+        <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[3rem] p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden group animate-in fade-in-0 zoom-in-95">
+            <div className="text-center mb-10">
+                <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30 group-hover:scale-110 transition-transform duration-500">
+                    <LinkIcon className="w-8 h-8 text-rose-500" />
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">Your Link is Ready!</h1>
+                <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">Share your eternal echo</p>
+            </div>
+
+            <div className="space-y-4">
+                <div className="relative">
+                    <input 
+                        type="text" 
+                        readOnly 
+                        value={link} 
+                        className="w-full bg-black/40 border border-white/5 rounded-2xl pl-6 pr-14 py-4 text-white/60 outline-none transition-all placeholder:text-white/10 text-sm" 
+                    />
+                    <Button 
+                        size="icon"
+                        variant="ghost"
+                        onClick={onCopy}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                    >
+                        <Copy className="w-4 h-4" />
+                    </Button>
+                </div>
+
+                <Button 
+                    onClick={onPreview}
+                    className="w-full group/btn relative overflow-hidden py-6 rounded-2xl md:rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500 bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95"
+                >
+                    Preview Proposal
+                </Button>
+
+                <Button 
+                    onClick={onCreateAnother}
+                    variant="link"
+                    className="w-full text-white/40 hover:text-white"
+                >
+                    Create a new proposal
+                </Button>
+            </div>
+        </div>
+    );
+};
+
 const SetupPage = ({ onStart }: SetupPageProps) => {
   const [formData, setFormData] = useState<SetupData>({ 
     yourName: '', 
@@ -978,6 +1026,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const { firestore } = useFirebase();
 
   // Anonymous sign-in
@@ -1090,7 +1139,12 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     addDocumentNonBlocking(proposalsCol, proposalData)
         .then((docRef) => {
             if (docRef) {
-                onStart(docRef.id);
+                const newUrl = `${window.location.origin}${window.location.pathname}?proposalId=${docRef.id}`;
+                setGeneratedLink(newUrl);
+                toast({
+                    title: "Proposal Link Generated!",
+                    description: "You can now copy the link or preview your proposal.",
+                });
             }
         })
         .catch((error) => {
@@ -1106,6 +1160,34 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
             setIsGenerating(false);
         });
   };
+
+  const handlePreview = () => {
+    if (!generatedLink) return;
+    const proposalId = new URL(generatedLink).searchParams.get('proposalId');
+    if (proposalId) {
+        onStart(proposalId);
+    }
+  };
+
+  const handleCopyLink = () => {
+      if (!generatedLink) return;
+      navigator.clipboard.writeText(generatedLink);
+      toast({
+          title: "Link Copied!",
+          description: "Your shareable link is now on your clipboard.",
+      });
+  };
+
+  const handleCreateAnother = () => {
+      setGeneratedLink(null);
+      setFormData({ 
+          yourName: '', 
+          partnerName: '', 
+          message: '', 
+          images: [],
+          theme: 'romantic'
+      });
+  };
   
   return (
     <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden relative">
@@ -1116,120 +1198,129 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
       </div>
 
       <div className="relative w-full max-w-xl z-10">
-        <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[3rem] p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden group">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30 group-hover:scale-110 transition-transform duration-500">
-              <HeartSVG className="w-8 h-8 text-rose-500 animate-pulse" />
+        {generatedLink ? (
+          <ShareView 
+              link={generatedLink}
+              onPreview={handlePreview}
+              onCopy={handleCopyLink}
+              onCreateAnother={handleCreateAnother}
+          />
+        ) : (
+          <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[3rem] p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden group">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30 group-hover:scale-110 transition-transform duration-500">
+                <HeartSVG className="w-8 h-8 text-rose-500 animate-pulse" />
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">Eternal Echo</h1>
+              <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">Customize your proposal</p>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">Eternal Echo</h1>
-            <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">Customize your proposal</p>
-          </div>
 
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Your Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Romeo" 
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
+                    value={formData.yourName} 
+                    onChange={e => setFormData({...formData, yourName: e.target.value})} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Their Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Juliet" 
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
+                    value={formData.partnerName} 
+                    onChange={e => setFormData({...formData, partnerName: e.target.value})} 
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Your Name</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Romeo" 
-                  className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
-                  value={formData.yourName} 
-                  onChange={e => setFormData({...formData, yourName: e.target.value})} 
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Proposal Theme</label>
+                  <Select value={formData.theme} onValueChange={(value) => setFormData({...formData, theme: value })}>
+                      <SelectTrigger className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-rose-500/50 transition-all">
+                          <SelectValue placeholder="Select a theme" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="romantic">Romantic</SelectItem>
+                          <SelectItem value="cyber">Cyber-Glitch</SelectItem>
+                          <SelectItem value="galactic">Galactic</SelectItem>
+                          <SelectItem value="retro">Retro</SelectItem>
+                          <SelectItem value="agent">Secret Agent</SelectItem>
+                          <SelectItem value="winter-whisper">Winter Whisper</SelectItem>
+                      </SelectContent>
+                  </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Your Proposal Question</label>
+                <textarea 
+                  className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white h-24 resize-none outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
+                  placeholder="Will you be my Valentine?" 
+                  value={formData.message} 
+                  onChange={e => setFormData({...formData, message: e.target.value})} 
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Their Name</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Juliet" 
-                  className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
-                  value={formData.partnerName} 
-                  onChange={e => setFormData({...formData, partnerName: e.target.value})} 
-                />
-              </div>
-            </div>
 
-            <div className="space-y-2">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Proposal Theme</label>
-                <Select value={formData.theme} onValueChange={(value) => setFormData({...formData, theme: value })}>
-                    <SelectTrigger className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-rose-500/50 transition-all">
-                        <SelectValue placeholder="Select a theme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="romantic">Romantic</SelectItem>
-                        <SelectItem value="cyber">Cyber-Glitch</SelectItem>
-                        <SelectItem value="galactic">Galactic</SelectItem>
-                        <SelectItem value="retro">Retro</SelectItem>
-                        <SelectItem value="agent">Secret Agent</SelectItem>
-                        <SelectItem value="winter-whisper">Winter Whisper</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Your Proposal Question</label>
-              <textarea 
-                className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white h-24 resize-none outline-none focus:border-rose-500/50 transition-all placeholder:text-white/10"
-                placeholder="Will you be my Valentine?" 
-                value={formData.message} 
-                onChange={e => setFormData({...formData, message: e.target.value})} 
-              />
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Memories & Captions ({formData.images.length})</label>
-              <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                {formData.images.map((img, i) => (
-                  <div key={i} className="group/item relative flex gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 animate-in slide-in-from-right-2 duration-300">
-                    <div className="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-white/10">
-                      <img src={img.src} className="w-full h-full object-cover" alt="" />
-                      <button 
-                        onClick={() => removeImage(i)}
-                        className="absolute inset-0 bg-rose-600/80 text-white opacity-0 group-hover/item:opacity-100 flex items-center justify-center transition-opacity"
-                      >
-                         <X className="w-4 h-4" />
-                      </button>
+              <div className="space-y-3">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Memories & Captions ({formData.images.length})</label>
+                <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                  {formData.images.map((img, i) => (
+                    <div key={i} className="group/item relative flex gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 animate-in slide-in-from-right-2 duration-300">
+                      <div className="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-white/10">
+                        <img src={img.src} className="w-full h-full object-cover" alt="" />
+                        <button 
+                          onClick={() => removeImage(i)}
+                          className="absolute inset-0 bg-rose-600/80 text-white opacity-0 group-hover/item:opacity-100 flex items-center justify-center transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex-1 flex flex-col justify-center gap-2">
+                        <input 
+                          type="text" 
+                          className="bg-transparent text-white text-xs outline-none border-b border-white/10 focus:border-rose-500/50 py-1 transition-all"
+                          value={img.caption}
+                          onChange={(e) => updateCaption(i, e.target.value)}
+                          placeholder="Add a caption..."
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1 flex flex-col justify-center gap-2">
-                      <input 
-                        type="text" 
-                        className="bg-transparent text-white text-xs outline-none border-b border-white/10 focus:border-rose-500/50 py-1 transition-all"
-                        value={img.caption}
-                        onChange={(e) => updateCaption(i, e.target.value)}
-                        placeholder="Add a caption..."
-                      />
-                    </div>
-                  </div>
-                ))}
-                <label className="w-full h-20 rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer text-white/20 hover:text-white/40 hover:bg-white/5 hover:border-white/20 transition-all duration-300">
-                  <UploadCloud className="w-6 h-6 mb-1" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.3em]">Upload Photos</span>
-                  <input type="file" multiple className="hidden" onChange={handleImage} accept="image/*" />
-                </label>
+                  ))}
+                  <label className="w-full h-20 rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer text-white/20 hover:text-white/40 hover:bg-white/5 hover:border-white/20 transition-all duration-300">
+                    <UploadCloud className="w-6 h-6 mb-1" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Upload Photos</span>
+                    <input type="file" multiple className="hidden" onChange={handleImage} accept="image/*" />
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <button 
-              disabled={!isFormValid || isGenerating}
-              onClick={handleGenerateLink}
-              className={`w-full group/btn relative overflow-hidden py-6 rounded-2xl md:rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500
-                ${isFormValid 
-                  ? 'bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95' 
-                  : 'bg-white/5 text-white/20 cursor-not-allowed'
-                }
-                ${isGenerating ? 'cursor-wait' : ''}
-                `}
-            >
-              <div className="relative z-10 flex items-center justify-center gap-3">
-                {isGenerating ? "Generating Your Link..." : (isFormValid ? "Generate Sharable Link" : "Complete Names to Start")}
-                {isFormValid && !isGenerating && <HeartSVG className="w-4 h-4 group-hover/btn:scale-125 transition-transform" />}
-              </div>
-              {isFormValid && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
-              )}
-            </button>
+              <button 
+                disabled={!isFormValid || isGenerating}
+                onClick={handleGenerateLink}
+                className={`w-full group/btn relative overflow-hidden py-6 rounded-2xl md:rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500
+                  ${isFormValid 
+                    ? 'bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95' 
+                    : 'bg-white/5 text-white/20 cursor-not-allowed'
+                  }
+                  ${isGenerating ? 'cursor-wait' : ''}
+                  `}
+              >
+                <div className="relative z-10 flex items-center justify-center gap-3">
+                  {isGenerating ? "Generating Your Link..." : (isFormValid ? "Generate Sharable Link" : "Complete Names to Start")}
+                  {isFormValid && !isGenerating && <HeartSVG className="w-4 h-4 group-hover/btn:scale-125 transition-transform" />}
+                </div>
+                {isFormValid && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
         <p className="text-center mt-8 text-white/10 text-[9px] font-bold tracking-[0.5em] uppercase pointer-events-none">
           Secure & Private Experience
         </p>
