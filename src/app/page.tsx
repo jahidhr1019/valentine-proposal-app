@@ -267,8 +267,8 @@ const celebrationThemes = {
     bg: 'bg-rose-900/10',
     accent: 'text-rose-400',
     particle: '❤️',
-    title: 'She Said Yes!',
-    subtitle: 'A new chapter begins.',
+    title: 'You Said Yes!',
+    subtitle: '',
     font: 'font-headline'
   },
   DISCO: {
@@ -1845,4 +1845,5 @@ const SnowfallCanvas = () => {
     
 
     
+
 
