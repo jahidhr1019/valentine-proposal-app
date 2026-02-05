@@ -1,68 +1,56 @@
 {
   "entities": {
     "Proposal": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Proposal",
       "type": "object",
       "description": "Represents the proposal settings and personalization details.",
       "properties": {
-        "id": {
+        "yourName": {
           "type": "string",
-          "description": "Unique identifier for the Proposal entity."
-        },
-        "userMessage": {
-          "type": "string",
-          "description": "The custom message the user wants to display during the proposal."
+          "description": "The name of the user making the proposal."
         },
         "partnerName": {
           "type": "string",
           "description": "The name of the user's partner."
         },
-        "proposerName": {
+        "message": {
           "type": "string",
-          "description": "The name of the user making the proposal."
+          "description": "The custom message the user wants to display during the proposal."
+        },
+        "theme": {
+          "type": "string",
+          "description": "The selected visual theme for the proposal."
+        },
+        "images": {
+          "type": "array",
+          "description": "A list of images with captions for the proposal slideshow.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "src": {
+                "type": "string",
+                "format": "uri"
+              },
+              "caption": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "src"
+            ]
+          }
+        },
+        "createdAt": {
+          "type": "object",
+          "description": "The server timestamp of when the proposal was created."
         }
       },
       "required": [
-        "id",
-        "userMessage",
+        "yourName",
         "partnerName",
-        "proposerName"
-      ]
-    },
-    "Photo": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Photo",
-      "type": "object",
-      "description": "Represents an image uploaded by the user, with associated metadata.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Photo entity."
-        },
-        "proposalId": {
-          "type": "string",
-          "description": "Reference to Proposal. (Relationship: Proposal 1:N Photo)"
-        },
-        "cloudinaryPublicId": {
-          "type": "string",
-          "description": "The public ID of the image stored on Cloudinary."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the image stored on Cloudinary.",
-          "format": "uri"
-        },
-        "caption": {
-          "type": "string",
-          "description": "Optional caption for the image."
-        }
-      },
-      "required": [
-        "id",
-        "proposalId",
-        "cloudinaryPublicId",
-        "imageUrl"
+        "theme",
+        "images",
+        "createdAt"
       ]
     },
     "DecisionHistory": {
@@ -121,26 +109,6 @@
             {
               "name": "proposalId",
               "description": "The unique ID of the proposal."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/proposals/{proposalId}/photos/{photoId}",
-        "definition": {
-          "entityName": "Photo",
-          "schema": {
-            "$ref": "#/backend/entities/Photo"
-          },
-          "description": "Stores photos associated with a public proposal.",
-          "params": [
-            {
-              "name": "proposalId",
-              "description": "The ID of the proposal to which the photo belongs."
-            },
-            {
-              "name": "photoId",
-              "description": "The unique ID of the photo."
             }
           ]
         }
