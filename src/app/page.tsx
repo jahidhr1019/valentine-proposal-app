@@ -1081,7 +1081,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
             <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30 group-hover:scale-110 transition-transform duration-500">
               <HeartSVG className="w-8 h-8 text-rose-500 animate-pulse" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">Digital Odyssey</h1>
+            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">Eternal Echo</h1>
             <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">Customize your proposal</p>
           </div>
 

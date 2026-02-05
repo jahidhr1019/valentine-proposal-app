@@ -1,5 +1,3 @@
-# Firebase Studio
+# Eternal Echo
 
-This is a NextJS starter in Firebase Studio.
-
-
+This is a romantic proposal application built with Next.js.
