@@ -1,0 +1,175 @@
+{
+  "entities": {
+    "Proposal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Proposal",
+      "type": "object",
+      "description": "Represents the proposal settings and personalization details.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Proposal entity."
+        },
+        "userMessage": {
+          "type": "string",
+          "description": "The custom message the user wants to display during the proposal."
+        },
+        "partnerName": {
+          "type": "string",
+          "description": "The name of the user's partner."
+        },
+        "proposerName": {
+          "type": "string",
+          "description": "The name of the user making the proposal."
+        }
+      },
+      "required": [
+        "id",
+        "userMessage",
+        "partnerName",
+        "proposerName"
+      ]
+    },
+    "Photo": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Photo",
+      "type": "object",
+      "description": "Represents an image uploaded by the user, with associated metadata.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Photo entity."
+        },
+        "proposalId": {
+          "type": "string",
+          "description": "Reference to Proposal. (Relationship: Proposal 1:N Photo)"
+        },
+        "cloudinaryPublicId": {
+          "type": "string",
+          "description": "The public ID of the image stored on Cloudinary."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the image stored on Cloudinary.",
+          "format": "uri"
+        },
+        "caption": {
+          "type": "string",
+          "description": "Optional caption for the image."
+        }
+      },
+      "required": [
+        "id",
+        "proposalId",
+        "cloudinaryPublicId",
+        "imageUrl"
+      ]
+    },
+    "DecisionHistory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DecisionHistory",
+      "type": "object",
+      "description": "Records the history of 'Yes' or 'No' button presses to influence future AI button behavior.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DecisionHistory entity."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of the button press event.",
+          "format": "date-time"
+        },
+        "decision": {
+          "type": "string",
+          "description": "The decision made ('yes' or 'no').",
+          "format": "string"
+        },
+        "xPosition": {
+          "type": "number",
+          "description": "The X coordinate of button press (for AI to learn click patterns)."
+        },
+        "yPosition": {
+          "type": "number",
+          "description": "The Y coordinate of button press (for AI to learn click patterns)."
+        }
+      },
+      "required": [
+        "id",
+        "timestamp",
+        "decision"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/proposals/{proposalId}",
+        "definition": {
+          "entityName": "Proposal",
+          "schema": {
+            "$ref": "#/backend/entities/Proposal"
+          },
+          "description": "Stores proposal data specific to a user. Path-based ownership ensures only the user can access these documents.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who created the proposal."
+            },
+            {
+              "name": "proposalId",
+              "description": "The unique ID of the proposal."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/proposals/{proposalId}/photos/{photoId}",
+        "definition": {
+          "entityName": "Photo",
+          "schema": {
+            "$ref": "#/backend/entities/Photo"
+          },
+          "description": "Stores photos associated with a specific proposal for a user. Path-based ownership ensures only the user can access these documents.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the proposal and photos."
+            },
+            {
+              "name": "proposalId",
+              "description": "The ID of the proposal to which the photo belongs."
+            },
+            {
+              "name": "photoId",
+              "description": "The unique ID of the photo."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/decision_history/{decisionHistoryId}",
+        "definition": {
+          "entityName": "DecisionHistory",
+          "schema": {
+            "$ref": "#/backend/entities/DecisionHistory"
+          },
+          "description": "Stores the history of button presses for machine learning purposes.",
+          "params": [
+            {
+              "name": "decisionHistoryId",
+              "description": "The unique ID of the decision history record."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage proposal personalization, photo memories, and decision history for the Eternal Echo app. It prioritizes authorization independence by using path-based ownership for user-specific data, eliminating the need for `get()` calls in security rules. Specifically, all proposal data and associated photos will reside under a user-specific path. This approach allows for atomic operations (transactions/batches) when creating or updating proposal documents and their related photo subcollections. QAPs (Rules are not Filters) are supported because list operations can be secured by scoping the queries to the user's path. Data segregation ensures that all data within a user's path shares the same access control requirements. The DecisionHistory is located outside the proposal to allow more general machine learning."
+  }
+}
