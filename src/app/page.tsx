@@ -860,12 +860,9 @@ const LoveOdyssey = ({
                <span className={cn("text-xl md:text-2xl transition-all duration-1000", frameStyles.label)}>
                  {proposal.partnerName} & {proposal.yourName}
                </span>
-               <div className="mt-2 flex items-center gap-2">
-                 <div className="h-px w-8 bg-white/20" />
-                 <span className="text-white/40 text-[9px] font-bold tracking-[0.3em] uppercase">
-                   Always & Forever
-                 </span>
-                 <div className="h-px w-8 bg-white/20" />
+               <div className="mt-2 text-center">
+                 <p className="text-rose-400 text-xl font-bold tracking-wider">Always & Forever</p>
+                 <p className="text-white/60 text-[9px] tracking-[0.3em] uppercase mt-1">A new chapter begins</p>
                </div>
             </div>
           </div>
