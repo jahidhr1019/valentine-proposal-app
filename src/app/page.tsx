@@ -16,29 +16,45 @@ import { setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-b
 import { v4 as uuidv4 } from 'uuid';
 import { getAuth } from 'firebase/auth';
 
-// This is the placeholder function for your Cloudinary integration.
-// When you're ready, you can add your Cloudinary upload logic here.
-// The function should take a file object and return a promise that resolves with the public URL.
 const uploadImageToCloudinary = async (file: File): Promise<string> => {
-  console.log(`Pretending to upload ${file.name} to Cloudinary...`);
-  // ** YOUR CLOUDINARY UPLOAD LOGIC GOES HERE **
-  // Example:
-  // const formData = new FormData();
-  // formData.append('file', file);
-  // formData.append('upload_preset', 'your_unsigned_preset');
-  // const response = await fetch('https://api.cloudinary.com/v1_1/your_cloud_name/image/upload', {
-  //   method: 'POST',
-  //   body: formData,
-  // });
-  // const data = await response.json();
-  // return data.secure_url;
+  // This function now contains real logic to upload to Cloudinary.
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  // The upload preset you created in the Cloudinary dashboard.
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  if (!uploadPreset) {
+    throw new Error("Cloudinary upload preset is not configured. Check your .env.local file.");
+  }
+  formData.append('upload_preset', uploadPreset);
 
-  // For now, we'll return a placeholder to simulate the process.
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-  const placeholderUrl = `https://picsum.photos/seed/${Math.random()}/800/1200`;
-  console.log(`... and it's 'uploaded' to ${placeholderUrl}`);
-  return placeholderUrl;
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  if (!cloudName) {
+    throw new Error("Cloudinary cloud name is not configured. Check your .env.local file.");
+  }
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Cloudinary upload failed: ${errorData.error.message}`);
+    }
+
+    const data = await response.json();
+    return data.secure_url; // This is the permanent URL for your image.
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    // Re-throw the error to be caught by the handleGenerateLink function
+    throw error;
+  }
 };
+
 
 // Helper to convert data URL to File object
 async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
@@ -1049,8 +1065,6 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
               fileToUpload = await dataUrlToFile(image.src, `upload-${Date.now()}.jpg`);
           }
 
-          // ** This is where you will call your Cloudinary upload function. **
-          // I am using the placeholder function for now.
           const imageUrl = await uploadImageToCloudinary(fileToUpload);
 
           return {
