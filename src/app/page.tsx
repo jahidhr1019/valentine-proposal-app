@@ -3,18 +3,56 @@
 
 import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Heart, Copy } from 'lucide-react';
+import { Heart, Copy, UploadCloud, X } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import placeholderImagesData from '@/lib/placeholder-images.json';
-import pako from 'pako';
+import { FirebaseClientProvider, useFirebase, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, setDoc, getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { v4 as uuidv4 } from 'uuid';
+import { getAuth } from 'firebase/auth';
+
+// This is the placeholder function for your Cloudinary integration.
+// When you're ready, you can add your Cloudinary upload logic here.
+// The function should take a file object and return a promise that resolves with the public URL.
+const uploadImageToCloudinary = async (file: File): Promise<string> => {
+  console.log(`Pretending to upload ${file.name} to Cloudinary...`);
+  // ** YOUR CLOUDINARY UPLOAD LOGIC GOES HERE **
+  // Example:
+  // const formData = new FormData();
+  // formData.append('file', file);
+  // formData.append('upload_preset', 'your_unsigned_preset');
+  // const response = await fetch('https://api.cloudinary.com/v1_1/your_cloud_name/image/upload', {
+  //   method: 'POST',
+  //   body: formData,
+  // });
+  // const data = await response.json();
+  // return data.secure_url;
+
+  // For now, we'll return a placeholder to simulate the process.
+  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+  const placeholderUrl = `https://picsum.photos/seed/${Math.random()}/800/1200`;
+  console.log(`... and it's 'uploaded' to ${placeholderUrl}`);
+  return placeholderUrl;
+};
+
+// Helper to convert data URL to File object
+async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type });
+}
+
 
 type ImageWithCaption = {
   src: string;
   caption: string;
   "data-ai-hint"?: string;
+  file?: File; // To hold the actual file object for uploading
 };
 
 type SetupData = {
@@ -25,15 +63,22 @@ type SetupData = {
   theme: string;
 };
 
-type LoveOdysseyProps = {
-  userImages: ImageWithCaption[];
-  partnerName: string;
+type ProposalData = {
   yourName: string;
-  generatedLink: string | null;
+  partnerName:string;
+  message: string;
+  images: { src: string; caption: string }[];
+  theme: string;
+  createdAt: any;
+}
+
+
+type LoveOdysseyProps = {
+  proposal: ProposalData;
 };
 
 type SetupPageProps = {
-  onStart: (data: SetupData, link: string | null) => void;
+  onStart: (proposalId: string) => void;
 };
 
 type LivingButtonProps = {
@@ -56,28 +101,6 @@ type HeartSVGProps = {
 type FloatingHeartsProps = {
   count: number;
 };
-
-// Functions to safely encode and decode data
-// Helper to convert Uint8Array to a Base64 string
-function uint8ArrayToBase64(uint8array: Uint8Array): string {
-  let binary = '';
-  const len = uint8array.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(uint8array[i]);
-  }
-  return window.btoa(binary);
-}
-
-// Helper to convert a Base64 string to a Uint8Array
-function base64ToUint8Array(base64: string): Uint8Array {
-  const binary_string = window.atob(base64);
-  const len = binary_string.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binary_string.charCodeAt(i);
-  }
-  return bytes;
-}
 
 
 const themeConfigs = {
@@ -199,6 +222,29 @@ const themeConfigs = {
     orb2: "bg-red-900/10",
     spanGradient: "from-gray-400 via-gray-200 to-white",
     proposalByColor: "text-gray-400/40"
+  },
+    "winter-whisper": {
+    initialMessage: "You're the only one I want to get cozy with.",
+    rejectionMessages: [
+      "My heart is getting frostbite!",
+      "I'll build you a castle of snow and blankets.",
+      "Don't leave me out in the cold!",
+      "But baby, it's cold outside...",
+      "Is your heart frozen?",
+      "You're giving me the cold shoulder.",
+      "This is a blizzard of emotions!",
+      "I'd melt for a 'Yes'.",
+      "I'm about to have a meltdown.",
+      "My love for you is not seasonal!",
+      "Last chance before I turn into a snowman."
+    ],
+    partnerName: "My Snowflake",
+    yourName: "Your Fireplace",
+    font: "font-headline",
+    orb1: "bg-blue-200/20",
+    orb2: "bg-slate-100/20",
+    spanGradient: "from-blue-200 via-white to-blue-100",
+    proposalByColor: "text-blue-200/40"
   }
 };
 
@@ -287,7 +333,15 @@ const celebrationThemes = {
 };
 
 
-export default function HomePage() {
+export default function AppWrapper() {
+  return (
+    <FirebaseClientProvider>
+      <HomePage />
+    </FirebaseClientProvider>
+  );
+}
+
+function HomePage() {
   return (
     <Suspense fallback={
       <div className="fixed inset-0 bg-[#030712] flex items-center justify-center text-white font-headline">
@@ -301,122 +355,107 @@ export default function HomePage() {
 
 function Home() {
   const searchParams = useSearchParams();
-  const [initialData, setInitialData] = useState<SetupData | null>(null);
-  const [isParsingUrl, setIsParsingUrl] = useState(true);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const dataParam = searchParams.get('data');
-    if (dataParam) {
-      try {
-        const compressedData = base64ToUint8Array(dataParam);
-        const decompressedJson = pako.inflate(compressedData, { to: 'string' });
-        const parsedData = JSON.parse(decompressedJson);
-        setInitialData(parsedData);
-      } catch (error) {
-        console.error("Failed to parse proposal data from URL:", error);
-        toast({
-          variant: "destructive",
-          title: "Invalid Link",
-          description: "This proposal link appears to be broken.",
-        });
-      }
-    }
-    setIsParsingUrl(false);
-  }, [searchParams, toast]);
-
-  const [setupData, setSetupData] = useState<SetupData>({
-    yourName: '',
-    partnerName: '',
-    message: '',
-    images: [],
-    theme: 'romantic',
-  });
-  const [isStarted, setIsStarted] = useState(false);
-  const [isFinalState, setIsFinalState] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [rejectionCount, setRejectionCount] = useState(0);
-  const [yesButtonScale, setYesButtonScale] = useState(1);
-  const [noButtonScale, setNoButtonScale] = useState(1);
-  const [isHeartbroken, setIsHeartbroken] = useState(false);
-  const [generatedLinkForPreview, setGeneratedLinkForPreview] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (initialData) {
-      handleStart(initialData, null);
-    }
-  }, [initialData]);
-
-  const handleStart = (data: SetupData, link: string | null) => {
-    setSetupData(data);
-    setGeneratedLinkForPreview(link);
-    setIsStarted(true);
-  };
-
-  const handleNoClicked = () => {
-    if (isHeartbroken) return;
-
-    setIsHeartbroken(true);
-    setYesButtonScale(prev => prev + 0.4);
-    setNoButtonScale(prev => Math.max(0.3, prev * 0.9));
-
-    setTimeout(() => {
-        setIsHeartbroken(false);
-        setRejectionCount(prev => prev + 1);
-    }, 2500);
-  };
-
-  const handleYesClicked = (e?: MouseEvent) => {
-    if (e) e.stopPropagation();
-    setIsFinalState(true);
-
-    setTimeout(() => {
-        setShowCelebration(true);
-    }, 800);
-
-    setTimeout(() => {
-        setShowSuccess(true);
-    }, 800 + 3000);
-  };
+  const proposalId = searchParams.get('proposalId');
+  const [currentProposalId, setCurrentProposalId] = useState<string | null>(proposalId);
   
-  if (isParsingUrl) {
-    return (
-      <div className="fixed inset-0 bg-[#030712] flex items-center justify-center text-white font-headline">
-        Unsealing Envelope...
-      </div>
-    );
-  }
-  
-  if (!isStarted) {
+  const handleStart = (newProposalId: string) => {
+    setCurrentProposalId(newProposalId);
+    const newUrl = `${window.location.pathname}?proposalId=${newProposalId}`;
+    window.history.pushState({}, '', newUrl);
+  };
+
+  if (!currentProposalId) {
     return <SetupPage onStart={handleStart} />;
   }
 
-  if (showSuccess) {
-    return (
-      <LoveOdyssey 
-        userImages={setupData.images} 
-        partnerName={setupData.partnerName}
-        yourName={setupData.yourName}
-        generatedLink={generatedLinkForPreview}
-      />
-    );
-  }
+  return <ProposalPlayer proposalId={currentProposalId} />;
+}
 
-  if(showCelebration) {
-    return <CelebrationScreen />;
-  }
+const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
+    const { firestore } = useFirebase();
 
-  const currentThemeConfig = themeConfigs[setupData.theme as keyof typeof themeConfigs] || themeConfigs.romantic;
+    const proposalRef = useMemoFirebase(() => {
+        if (!firestore || !proposalId) return null;
+        return doc(firestore, 'proposals', proposalId);
+    }, [firestore, proposalId]);
 
+    const { data: proposal, isLoading } = useDoc<ProposalData>(proposalRef);
+
+    const [isFinalState, setIsFinalState] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [rejectionCount, setRejectionCount] = useState(0);
+    const [yesButtonScale, setYesButtonScale] = useState(1);
+    const [noButtonScale, setNoButtonScale] = useState(1);
+    const [isHeartbroken, setIsHeartbroken] = useState(false);
+
+    const handleNoClicked = () => {
+        if (isHeartbroken) return;
+        setIsHeartbroken(true);
+        setYesButtonScale(prev => prev + 0.4);
+        setNoButtonScale(prev => Math.max(0.3, prev * 0.9));
+        setTimeout(() => {
+            setIsHeartbroken(false);
+            setRejectionCount(prev => prev + 1);
+        }, 2500);
+    };
+
+    const handleYesClicked = (e?: MouseEvent) => {
+        if (e) e.stopPropagation();
+        setIsFinalState(true);
+        setTimeout(() => setShowCelebration(true), 800);
+        setTimeout(() => setShowSuccess(true), 800 + 3000);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 bg-[#030712] flex items-center justify-center text-white font-headline">
+                Unsealing Envelope...
+            </div>
+        );
+    }
+
+    if (!proposal) {
+        return (
+            <div className="fixed inset-0 bg-[#030712] flex items-center justify-center text-white font-headline">
+                Sorry, this proposal could not be found.
+            </div>
+        );
+    }
+    
+    if (showSuccess) {
+      return <LoveOdyssey proposal={proposal} />;
+    }
+  
+    if(showCelebration) {
+      return <CelebrationScreen />;
+    }
+
+  const currentThemeConfig = themeConfigs[proposal.theme as keyof typeof themeConfigs] || themeConfigs.romantic;
   const proposalMessage = rejectionCount === 0
-    ? (setupData.message || currentThemeConfig.initialMessage)
+    ? (proposal.message || currentThemeConfig.initialMessage)
     : currentThemeConfig.rejectionMessages[(rejectionCount - 1) % currentThemeConfig.rejectionMessages.length];
   
-  const partner = setupData.partnerName || currentThemeConfig.partnerName;
+  const partner = proposal.partnerName || currentThemeConfig.partnerName;
+
+  const BackgroundCanvas = () => {
+    switch (proposal.theme) {
+      case 'winter-whisper':
+        return <SnowfallCanvas />;
+      case 'romantic':
+      case 'agent': // Enchanted might fit here too
+        return <SakuraCanvas />;
+      case 'cyber':
+      case 'galactic':
+        return <ConstellationCanvas />;
+      default:
+        return <ConstellationCanvas />;
+    }
+  };
 
   return (
     <div className={cn("fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden selection:bg-rose-500/30", isHeartbroken && "animate-shake")}>
+      <BackgroundCanvas />
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className={`absolute top-[-10%] left-[-5%] w-[60%] h-[60%] ${currentThemeConfig.orb1} rounded-full blur-[120px] animate-pulse transition-colors duration-1000`} />
         <div className={`absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] ${currentThemeConfig.orb2} rounded-full blur-[120px] animate-pulse delay-1000 transition-colors duration-1000`} />
@@ -427,7 +466,7 @@ function Home() {
         <h1 className={cn(
             "text-5xl md:text-8xl font-black mb-4 tracking-tighter text-white drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]",
             currentThemeConfig.font,
-            {'text-3xl md:text-5xl': setupData.theme === 'retro'}
+            {'text-3xl md:text-5xl': proposal.theme === 'retro'}
             )}>
           {partner}, <span className={cn("text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient-x", currentThemeConfig.spanGradient)}>
             {isHeartbroken ? "Is this really goodbye?" : proposalMessage}
@@ -650,7 +689,6 @@ const BeatingHeartCanvas = () => {
     const animate = (time: number) => {
       if (!ctx || !canvas) return;
       
-      // A curve that creates a sharp "beat" similar to a heartbeat ECG.
       const beat = 1 + 0.2 * Math.pow(Math.sin(time / 250), 10);
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -658,15 +696,11 @@ const BeatingHeartCanvas = () => {
       
       ctx.save();
       
-      // Center the drawing in the canvas
       ctx.translate(canvas.width / 2, canvas.height / 2);
       
-      // Scale the heart. The SVG is 24x24, we want it to be ~32px.
-      // Canvas is 40x40, so we scale it up but leave some padding.
       const baseScale = (canvas.width / 24) * 0.8; 
       ctx.scale(baseScale * beat, baseScale * beat);
       
-      // The SVG path coordinates are not centered, so we translate to center the 24x24 box.
       ctx.translate(-12, -12); 
       
       ctx.fill(heartPath);
@@ -682,23 +716,18 @@ const BeatingHeartCanvas = () => {
     };
   }, [heartPath]);
 
-  // Using a 40x40 canvas to provide some padding for the 32x32 (w-8, h-8) heart.
   return <canvas ref={canvasRef} width={40} height={40} />;
 };
 
 const LoveOdyssey = ({ 
-  userImages, 
-  partnerName, 
-  yourName,
-  generatedLink
+  proposal
 }: LoveOdysseyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMessage, setShowMessage] = useState(true);
   const { toast } = useToast();
 
   const copyLinkToClipboard = () => {
-    if (!generatedLink) return;
-    navigator.clipboard.writeText(generatedLink);
+    navigator.clipboard.writeText(window.location.href);
     toast({
       title: "Link Copied!",
       description: "You can now share this magical moment."
@@ -715,17 +744,16 @@ const LoveOdyssey = ({
   ], []);
 
   const displayImages = useMemo(() => {
-    if (userImages && userImages.length > 0) {
-      return userImages;
+    if (proposal.images && proposal.images.length > 0) {
+      return proposal.images;
     }
     
-    // Fallback to placeholder images if no user images are provided
     return placeholderImagesData.placeholderImages.map(p => ({
         src: p.src,
         caption: "",
         "data-ai-hint": p.hint,
     }));
-  }, [userImages]);
+  }, [proposal.images]);
 
   useEffect(() => {
     if (displayImages.length === 0) return;
@@ -737,8 +765,6 @@ const LoveOdyssey = ({
   }, [displayImages.length]);
 
   if (displayImages.length === 0) {
-    // This can happen briefly if userImages is cleared.
-    // Or if placeholder data is not available.
     return (
         <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center text-white">
             Loading memories...
@@ -790,14 +816,14 @@ const LoveOdyssey = ({
                 src={currentImage.src} 
                 className="w-full h-full object-cover animate-in fade-in zoom-in-105 duration-1000"
                 alt="Memory"
-                data-ai-hint={currentImage['data-ai-hint']}
+                data-ai-hint={(currentImage as any)['data-ai-hint']}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-60" />
             </div>
             
             <div className="bg-white/5 backdrop-blur-md px-4 py-3 md:py-4 border-t border-white/10 flex flex-col items-center">
                <span className={cn("text-xl md:text-2xl transition-all duration-1000", frameStyles.label)}>
-                 {partnerName} & {yourName}
+                 {proposal.partnerName} & {proposal.yourName}
                </span>
                <div className="mt-2 flex items-center gap-2">
                  <div className="h-px w-8 bg-white/20" />
@@ -822,7 +848,6 @@ const LoveOdyssey = ({
         )}
       </div>
 
-      {generatedLink && (
         <div className="absolute bottom-8 z-20 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-1000 fill-mode-forwards opacity-0">
           <Button 
             onClick={copyLinkToClipboard}
@@ -832,7 +857,6 @@ const LoveOdyssey = ({
             Copy Shareable Link
           </Button>
         </div>
-      )}
 
       <style>{`
         /* Heartbeat animation is now handled by the canvas component */
@@ -940,7 +964,16 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   });
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
-  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { firestore } = useFirebase();
+
+  // Anonymous sign-in
+  useEffect(() => {
+    const auth = getAuth();
+    if (!auth.currentUser) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -949,17 +982,26 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) {
-            setFormData(prev => ({ 
-              ...prev, 
-              images: [...prev.images, { src: ev.target.result as string, caption: "" }] 
-            }));
-        }
-      };
-      reader.readAsDataURL(file);
+    
+    const imagePromises = files.map(file => {
+      return new Promise<ImageWithCaption>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+              resolve({
+                  src: ev.target!.result as string,
+                  caption: "",
+                  file: file,
+              });
+          };
+          reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(imagePromises).then(newImages => {
+        setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, ...newImages]
+        }));
     });
   };
 
@@ -978,95 +1020,73 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
 
   const isFormValid = formData.yourName && formData.partnerName;
 
-  const handleGenerateLink = () => {
-    if (!isFormValid) return;
+  const handleGenerateLink = async () => {
+    if (!isFormValid || !firestore) {
+      toast({
+        variant: "destructive",
+        title: "Incomplete Form",
+        description: "Please fill out your name and your partner's name.",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    toast({
+        title: "Creating Your Proposal...",
+        description: "Uploading images and saving your moment. Please wait.",
+    });
+
     try {
-      const jsonString = JSON.stringify(formData);
-      const compressedData = pako.deflate(jsonString);
-      const base64Data = uint8ArrayToBase64(compressedData);
-      const link = `${window.location.origin}${window.location.pathname}?data=${encodeURIComponent(base64Data)}`;
-      setGeneratedLink(link);
-    } catch (e) {
-      console.error(e);
+      // Step 1: Upload images and get their URLs
+      const uploadedImages = await Promise.all(
+        formData.images.map(async (image) => {
+          let fileToUpload: File;
+          if (image.file) {
+              fileToUpload = image.file;
+          } else {
+              // This is a fallback if the file object isn't available for some reason.
+              // This can happen if the images were loaded from a previous session.
+              fileToUpload = await dataUrlToFile(image.src, `upload-${Date.now()}.jpg`);
+          }
+
+          // ** This is where you will call your Cloudinary upload function. **
+          // I am using the placeholder function for now.
+          const imageUrl = await uploadImageToCloudinary(fileToUpload);
+
+          return {
+            src: imageUrl,
+            caption: image.caption,
+          };
+        })
+      );
+
+      // Step 2: Create the proposal document in Firestore
+      const proposalData = {
+        yourName: formData.yourName,
+        partnerName: formData.partnerName,
+        message: formData.message,
+        theme: formData.theme,
+        images: uploadedImages,
+        createdAt: serverTimestamp(),
+      };
+      
+      const docRef = await addDoc(collection(firestore, "proposals"), proposalData);
+
+      // Step 3: Trigger the onStart callback with the new proposal ID
+      onStart(docRef.id);
+
+    } catch (e: any) {
+      console.error("Error generating proposal:", e);
       toast({
         variant: "destructive",
         title: "Error Generating Link",
-        description: "There was a problem creating your shareable link."
+        description: e.message || "There was a problem creating your proposal. Please try again.",
       });
+    } finally {
+      setIsGenerating(false);
     }
   };
-
-  const copyLinkToClipboard = () => {
-    if (!generatedLink) return;
-    navigator.clipboard.writeText(generatedLink);
-    toast({
-      title: "Link Copied!",
-      description: "You can now send the proposal to your loved one."
-    });
-  };
   
-  if (generatedLink) {
-    return (
-      <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden relative">
-        {mounted && <FloatingBackground />}
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-900/10 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[120px] animate-pulse delay-700" />
-        </div>
-
-        <div className="relative w-full max-w-xl z-10">
-          <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[3rem] p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden group animate-in fade-in-0 zoom-in-95 duration-500">
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center justify-center p-4 bg-rose-500/10 rounded-full mb-6 ring-1 ring-rose-500/30">
-                <HeartSVG className="w-8 h-8 text-rose-500" />
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">Your Link is Ready</h1>
-              <p className="text-rose-200/40 font-bold tracking-[0.4em] uppercase text-[10px]">Send it to your loved one</p>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-rose-400/60 ml-4">Shareable Link</label>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    readOnly
-                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white/50 outline-none placeholder:text-white/10 text-sm"
-                    value={generatedLink} 
-                  />
-                  <button 
-                    onClick={copyLinkToClipboard}
-                    className="shrink-0 bg-white/10 text-white rounded-2xl px-6 font-bold text-sm hover:bg-white/20 active:scale-95 transition-all"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-
-              <button 
-                onClick={() => onStart(formData, generatedLink)}
-                className="w-full group/btn relative overflow-hidden py-6 rounded-2xl md:rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500 bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95"
-              >
-                <div className="relative z-10 flex items-center justify-center gap-3">
-                  Preview Proposal
-                  <HeartSVG className="w-4 h-4 group-hover/btn:scale-125 transition-transform" />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
-              </button>
-
-              <button 
-                onClick={() => setGeneratedLink(null)}
-                className="w-full py-4 rounded-2xl text-[11px] uppercase font-bold tracking-widest text-white/40 hover:text-white/60 hover:bg-white/5 transition-all"
-              >
-                Create a New Proposal
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 selection:bg-rose-500/30 overflow-x-hidden relative">
       {mounted && <FloatingBackground />}
@@ -1121,6 +1141,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
                         <SelectItem value="galactic">Galactic</SelectItem>
                         <SelectItem value="retro">Retro</SelectItem>
                         <SelectItem value="agent">Secret Agent</SelectItem>
+                        <SelectItem value="winter-whisper">Winter Whisper</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -1146,7 +1167,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
                         onClick={() => removeImage(i)}
                         className="absolute inset-0 bg-rose-600/80 text-white opacity-0 group-hover/item:opacity-100 flex items-center justify-center transition-opacity"
                       >
-                        <span className="text-xs font-bold uppercase tracking-tighter">Del</span>
+                         <X className="w-4 h-4" />
                       </button>
                     </div>
                     <div className="flex-1 flex flex-col justify-center gap-2">
@@ -1161,7 +1182,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
                   </div>
                 ))}
                 <label className="w-full h-20 rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer text-white/20 hover:text-white/40 hover:bg-white/5 hover:border-white/20 transition-all duration-300">
-                  <span className="text-xl mb-1">+</span>
+                  <UploadCloud className="w-6 h-6 mb-1" />
                   <span className="text-[9px] font-black uppercase tracking-[0.3em]">Upload Photos</span>
                   <input type="file" multiple className="hidden" onChange={handleImage} accept="image/*" />
                 </label>
@@ -1169,17 +1190,19 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
             </div>
 
             <button 
-              disabled={!isFormValid}
+              disabled={!isFormValid || isGenerating}
               onClick={handleGenerateLink}
               className={`w-full group/btn relative overflow-hidden py-6 rounded-2xl md:rounded-[2rem] font-black tracking-[0.4em] text-[11px] uppercase transition-all duration-500
                 ${isFormValid 
                   ? 'bg-rose-600 text-white shadow-[0_20px_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95' 
                   : 'bg-white/5 text-white/20 cursor-not-allowed'
-                }`}
+                }
+                ${isGenerating ? 'cursor-wait' : ''}
+                `}
             >
               <div className="relative z-10 flex items-center justify-center gap-3">
-                {isFormValid ? "Generate Sharable Link" : "Complete Names to Start"}
-                {isFormValid && <HeartSVG className="w-4 h-4 group-hover/btn:scale-125 transition-transform" />}
+                {isGenerating ? "Generating Your Link..." : (isFormValid ? "Generate Sharable Link" : "Complete Names to Start")}
+                {isFormValid && !isGenerating && <HeartSVG className="w-4 h-4 group-hover/btn:scale-125 transition-transform" />}
               </div>
               {isFormValid && (
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
@@ -1471,5 +1494,230 @@ const LivingButton = ({
         <span className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">{label}</span>
       </button>
     </div>
+  );
+};
+
+
+const SakuraCanvas = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+
+    let animationFrameId: number;
+    const petals: any[] = [];
+    const petalCount = 40;
+
+    for (let i = 0; i < petalCount; i++) {
+      petals.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 5 + 5,
+        speed: Math.random() * 1 + 0.5,
+        sway: Math.random() * 2,
+        opacity: Math.random() * 0.5 + 0.3,
+      });
+    }
+
+    const drawPetal = (x: number, y: number, size: number) => {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.bezierCurveTo(x - size, y + size, x + size, y + size * 1.5, x, y + size * 2.5);
+      ctx.bezierCurveTo(x - size, y + size * 1.5, x + size, y + size, x, y);
+      ctx.fill();
+    };
+
+    const animate = (time: number) => {
+      if(!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(255, 192, 203, 0.6)'; // Soft Pink
+
+      petals.forEach(p => {
+        p.y += p.speed;
+        p.x += Math.sin(time / 500 + p.sway) * 1.5;
+
+        if (p.y > canvas.height) {
+          p.y = -20;
+          p.x = Math.random() * canvas.width;
+        }
+
+        ctx.globalAlpha = p.opacity;
+        drawPetal(p.x, p.y, p.size);
+      });
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate(0);
+    return () => {
+        window.removeEventListener('resize', handleResize);
+        cancelAnimationFrame(animationFrameId);
+    }
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none -z-10" />;
+};
+const ConstellationCanvas = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      init();
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+
+    let stars: any[] = [];
+    const starCount = 60;
+    const connectionDist = 150;
+    let animationFrameId: number;
+
+    const init = () => {
+      stars = Array.from({ length: starCount }).map(() => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 1.5 + 1
+      }));
+    };
+
+    const animate = () => {
+      if(!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      stars.forEach((s, i) => {
+        s.x += s.vx;
+        s.y += s.vy;
+
+        if (s.x < 0 || s.x > canvas.width) s.vx *= -1;
+        if (s.y < 0 || s.y > canvas.height) s.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.fill();
+
+        for (let j = i + 1; j < stars.length; j++) {
+          const s2 = stars[j];
+          const dx = s.x - s2.x;
+          const dy = s.y - s2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < connectionDist) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(165, 180, 252, ${1 - dist / connectionDist})`; 
+            ctx.lineWidth = 0.5;
+            ctx.moveTo(s.x, s.y);
+            ctx.lineTo(s2.x, s2.y);
+            ctx.stroke();
+          }
+        }
+      });
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId)
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none -z-10 bg-[#030712]" />;
+};
+
+
+const SnowfallCanvas = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    let animationFrameId: number;
+    const flakes: any[] = [];
+    const flakeCount = 100;
+
+    for (let i = 0; i < flakeCount; i++) {
+      flakes.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 3 + 1,
+        density: Math.random() * flakeCount,
+        speed: Math.random() * 1 + 0.5,
+        opacity: Math.random() * 0.5 + 0.2
+      });
+    }
+
+    const animate = () => {
+      if(!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+
+      flakes.forEach(f => {
+        f.x += Math.sin(f.density) * 1; 
+        f.y += f.speed;
+        f.density += 0.02;
+
+        if (f.y > canvas.height) {
+          f.y = -10;
+          f.x = Math.random() * canvas.width;
+        }
+        
+        if (f.x > canvas.width + 5 || f.x < -5) {
+          f.x = Math.random() * canvas.width;
+        }
+
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+        ctx.globalAlpha = f.opacity;
+        ctx.fill();
+      });
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      className="fixed inset-0 pointer-events-none -z-10" 
+      style={{ filter: 'blur(0.5px)' }}
+    />
   );
 };
