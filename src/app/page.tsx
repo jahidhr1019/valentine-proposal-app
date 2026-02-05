@@ -475,42 +475,46 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
         {isHeartbroken ? <FallingBrokenHearts count={50} /> : <FloatingHearts count={250} />}
       </div>
 
-      <div className={`absolute top-12 md:top-20 text-center z-50 px-4 transition-all duration-1000 pointer-events-none ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
-        <h1 className={cn(
-            "text-5xl md:text-8xl font-black mb-4 tracking-tighter text-white drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]",
-            currentThemeConfig.font,
-            {'text-3xl md:text-5xl': proposal.theme === 'retro'}
-            )}>
-          {partner}, <span className={cn("text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient-x", currentThemeConfig.spanGradient)}>
-            {isHeartbroken ? "Is this really goodbye?" : proposalMessage}
-          </span>
-        </h1>
-      </div>
-
       <div className="absolute inset-0 z-40">
-        <div className="relative w-full h-full flex items-center justify-center gap-4 md:gap-8">
-          <LivingButton 
-            id="yes-button"
-            type="yes" 
-            label="YES"
-            onClick={handleYesClicked}
-            isFinalState={isFinalState} 
-            yesButtonScale={yesButtonScale}
-            noButtonScale={noButtonScale}
-            isHeartbroken={isHeartbroken}
-          />
-          <LivingButton
-            id="no-button"
-            key={rejectionCount} 
-            type="no" 
-            label={"NO"}
-            onCaught={handleNoClicked} 
-            isFinalState={isFinalState} 
-            rejectionCount={rejectionCount}
-            yesButtonScale={yesButtonScale}
-            noButtonScale={noButtonScale}
-            isHeartbroken={isHeartbroken}
-          />
+        <div className="relative w-full h-full flex flex-col items-center justify-center gap-16 md:gap-24 p-4">
+          
+          <div className={`text-center pointer-events-none transition-all duration-1000 ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
+            <h1 className={cn(
+                "text-5xl md:text-8xl font-black mb-4 tracking-tighter text-white drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]",
+                currentThemeConfig.font,
+                {'text-3xl md:text-5xl': proposal.theme === 'retro'}
+                )}>
+              {partner}, <span className={cn("text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient-x", currentThemeConfig.spanGradient)}>
+                {isHeartbroken ? "Is this really goodbye?" : proposalMessage}
+              </span>
+            </h1>
+          </div>
+
+          <div className={`relative flex items-center justify-center gap-4 md:gap-8 transition-all duration-1000 ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
+            <LivingButton 
+              id="yes-button"
+              type="yes" 
+              label="YES"
+              onClick={handleYesClicked}
+              isFinalState={isFinalState} 
+              yesButtonScale={yesButtonScale}
+              noButtonScale={noButtonScale}
+              isHeartbroken={isHeartbroken}
+            />
+            <LivingButton
+              id="no-button"
+              key={rejectionCount} 
+              type="no" 
+              label={"NO"}
+              onCaught={handleNoClicked} 
+              isFinalState={isFinalState} 
+              rejectionCount={rejectionCount}
+              yesButtonScale={yesButtonScale}
+              noButtonScale={noButtonScale}
+              isHeartbroken={isHeartbroken}
+            />
+          </div>
+
         </div>
       </div>
 
@@ -1714,6 +1718,8 @@ const ConstellationCanvas = () => {
       canvas.height = window.innerHeight;
       init();
     };
+    
+    init();
     handleResize();
     window.addEventListener('resize', handleResize);
 
@@ -1752,7 +1758,7 @@ const ConstellationCanvas = () => {
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    init();
+    
     animate();
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -1844,6 +1850,7 @@ const SnowfallCanvas = () => {
     
 
     
+
 
 
 
