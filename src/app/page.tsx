@@ -1694,15 +1694,6 @@ const ConstellationCanvas = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      init();
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-
     let stars: any[] = [];
     const starCount = 60;
     const connectionDist = 150;
@@ -1717,6 +1708,14 @@ const ConstellationCanvas = () => {
         radius: Math.random() * 1.5 + 1
       }));
     };
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      init();
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
 
     const animate = () => {
       if(!ctx) return;
@@ -1845,5 +1844,6 @@ const SnowfallCanvas = () => {
     
 
     
+
 
 
