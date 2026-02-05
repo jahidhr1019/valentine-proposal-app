@@ -87,7 +87,7 @@ type ProposalData = {
 
 
 type LoveOdysseyProps = {
-  proposal: ProposalData;
+  proposal: ProposalData & { id: string };
 };
 
 type SetupPageProps = {
@@ -747,13 +747,24 @@ const LoveOdyssey = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMessage, setShowMessage] = useState(true);
   const { toast } = useToast();
+  const [isCreator, setIsCreator] = useState(false);
 
-  const copyLinkToClipboard = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast({
-      title: "Link Copied!",
-      description: "You can now share this magical moment."
-    });
+  useEffect(() => {
+    if (typeof window !== 'undefined' && proposal?.id && sessionStorage.getItem(`creator_${proposal.id}`) === 'true') {
+      setIsCreator(true);
+    }
+  }, [proposal?.id]);
+
+  const handleHeartClick = () => {
+    if (isCreator) {
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link Copied!",
+        description: "You can now share this magical moment."
+      });
+    } else {
+      window.location.href = '/';
+    }
   };
   
   const defaultCaptions = useMemo(() => [
@@ -856,7 +867,7 @@ const LoveOdyssey = ({
 
         {showMessage && (
           <div 
-            onClick={copyLinkToClipboard}
+            onClick={handleHeartClick}
             className="p-4 sm:p-6 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md cursor-pointer group/heart"
           >
             <p className="text-rose-100/70 text-sm md:text-base font-light leading-relaxed px-2">
@@ -866,7 +877,7 @@ const LoveOdyssey = ({
                <BeatingHeartCanvas />
             </div>
              <p className="text-white/40 text-[10px] tracking-widest uppercase mt-4 opacity-0 group-hover/heart:opacity-100 transition-opacity duration-300">
-                Tap to Copy Link
+                {isCreator ? 'Tap to Copy Link' : 'Tap to Create Your Own'}
              </p>
           </div>
         )}
@@ -1140,6 +1151,7 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
     addDocumentNonBlocking(proposalsCol, proposalData)
         .then((docRef) => {
             if (docRef) {
+                sessionStorage.setItem(`creator_${docRef.id}`, 'true');
                 const newUrl = `${window.location.origin}${window.location.pathname}?proposalId=${docRef.id}`;
                 setGeneratedLink(newUrl);
                 toast({
@@ -1712,7 +1724,7 @@ const ConstellationCanvas = () => {
         radius: Math.random() * 1.5 + 1
       }));
     };
-
+    
     const handleResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -1720,7 +1732,6 @@ const ConstellationCanvas = () => {
     };
     
     init();
-    handleResize();
     window.addEventListener('resize', handleResize);
 
     const animate = () => {
@@ -1854,3 +1865,6 @@ const SnowfallCanvas = () => {
 
 
 
+
+
+    
