@@ -441,7 +441,7 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
     }
   
     if(showCelebration) {
-      return <CelebrationScreen />;
+      return <CelebrationScreen theme={proposal.theme} />;
     }
 
   const currentThemeConfig = themeConfigs[proposal.theme as keyof typeof themeConfigs] || themeConfigs.romantic;
@@ -597,19 +597,24 @@ const FallingBrokenHearts = ({ count }: FloatingHeartsProps) => {
   );
 };
 
+const proposalToCelebrationThemeMap: Record<string, keyof typeof celebrationThemes> = {
+  romantic: 'ROMANTIC',
+  cyber: 'MATRIX',
+  galactic: 'COSMIC',
+  retro: 'RETRO',
+  agent: 'JAZZ',
+  'winter-whisper': 'ROYAL',
+};
 
-const CelebrationScreen = () => {
+const CelebrationScreen = ({ theme: proposalTheme }: { theme: string }) => {
     const [mounted, setMounted] = useState(false);
     const [theme, setTheme] = useState(celebrationThemes.COSMIC); // Default theme
 
     useEffect(() => {
         setMounted(true);
-        if (typeof window !== 'undefined') {
-            const themeKeys = Object.keys(celebrationThemes);
-            const randomThemeKey = themeKeys[Math.floor(Math.random() * themeKeys.length)] as keyof typeof celebrationThemes;
-            setTheme(celebrationThemes[randomThemeKey]);
-        }
-    }, []);
+        const celebrationThemeKey = proposalToCelebrationThemeMap[proposalTheme] || 'COSMIC';
+        setTheme(celebrationThemes[celebrationThemeKey]);
+    }, [proposalTheme]);
 
     if (!mounted) {
         return <div className="fixed inset-0 bg-[#030712]" />;
