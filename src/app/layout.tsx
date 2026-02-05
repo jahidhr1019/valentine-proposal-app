@@ -2,29 +2,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-// src/app/layout.tsx
 
-import "./globals.css"; // You might have imports like this at the top
-
-export const metadata = {
-  title: "Valentine Eternal Echo",
-  description: "This is a romantic proposal application",
-  verification: {
-    google: 'a7ca153541ff3cec', 
-  },
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
-}
 export const metadata: Metadata = {
   title: 'Eternal Echo',
   description: 'A romantic proposal application.',
