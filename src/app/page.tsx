@@ -88,6 +88,7 @@ type ProposalData = {
 
 type LoveOdysseyProps = {
   proposal: ProposalData;
+  onClose: () => void;
 };
 
 type SetupPageProps = {
@@ -377,14 +378,20 @@ function Home() {
     window.history.pushState({}, '', newUrl);
   };
 
+  const handleClose = () => {
+    setCurrentProposalId(null);
+    const newUrl = `${window.location.pathname}`;
+    window.history.pushState({}, '', newUrl);
+  };
+
   if (!currentProposalId) {
     return <SetupPage onStart={handleStart} />;
   }
 
-  return <ProposalPlayer proposalId={currentProposalId} />;
+  return <ProposalPlayer proposalId={currentProposalId} onClose={handleClose}/>;
 }
 
-const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
+const ProposalPlayer = ({ proposalId, onClose }: { proposalId: string, onClose: () => void }) => {
     const { firestore } = useFirebase();
 
     const proposalRef = useMemoFirebase(() => {
@@ -437,7 +444,7 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
     }
     
     if (showSuccess) {
-      return <LoveOdyssey proposal={proposal} />;
+      return <LoveOdyssey proposal={proposal} onClose={onClose} />;
     }
   
     if(showCelebration) {
@@ -738,7 +745,8 @@ const BeatingHeartCanvas = () => {
 };
 
 const LoveOdyssey = ({ 
-  proposal
+  proposal,
+  onClose
 }: LoveOdysseyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMessage, setShowMessage] = useState(true);
@@ -820,6 +828,15 @@ const LoveOdyssey = ({
 
   return (
     <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center overflow-hidden z-[100] p-4 font-sans">
+      <Button 
+        onClick={onClose}
+        variant="ghost"
+        size="icon"
+        className="absolute top-6 right-6 z-50 text-white/50 hover:text-white hover:bg-white/10 rounded-full"
+      >
+        <X className="h-6 w-6" />
+        <span className="sr-only">Close</span>
+      </Button>
       <FloatingHearts count={250} />
       <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
         <img src={currentImage.src} className="w-full h-full object-cover" alt="" />
@@ -1502,6 +1519,7 @@ const LivingButton = ({
       setMode(null);
       setIsFleeing(false);
     }, 1000);
+    return;
   }, [isYes, isFinalState, isHeartbroken]);
 
   const handlePointerMove = useCallback((e: any) => {
@@ -1846,5 +1864,7 @@ const SnowfallCanvas = () => {
     />
   );
 };
+
+    
 
     
