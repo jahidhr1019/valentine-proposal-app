@@ -88,7 +88,6 @@ type ProposalData = {
 
 type LoveOdysseyProps = {
   proposal: ProposalData;
-  onClose: () => void;
 };
 
 type SetupPageProps = {
@@ -378,20 +377,14 @@ function Home() {
     window.history.pushState({}, '', newUrl);
   };
 
-  const handleClose = () => {
-    setCurrentProposalId(null);
-    const newUrl = `${window.location.pathname}`;
-    window.history.pushState({}, '', newUrl);
-  };
-
   if (!currentProposalId) {
     return <SetupPage onStart={handleStart} />;
   }
 
-  return <ProposalPlayer proposalId={currentProposalId} onClose={handleClose}/>;
+  return <ProposalPlayer proposalId={currentProposalId} />;
 }
 
-const ProposalPlayer = ({ proposalId, onClose }: { proposalId: string, onClose: () => void }) => {
+const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
     const { firestore } = useFirebase();
 
     const proposalRef = useMemoFirebase(() => {
@@ -444,7 +437,7 @@ const ProposalPlayer = ({ proposalId, onClose }: { proposalId: string, onClose: 
     }
     
     if (showSuccess) {
-      return <LoveOdyssey proposal={proposal} onClose={onClose} />;
+      return <LoveOdyssey proposal={proposal} />;
     }
   
     if(showCelebration) {
@@ -745,8 +738,7 @@ const BeatingHeartCanvas = () => {
 };
 
 const LoveOdyssey = ({ 
-  proposal,
-  onClose
+  proposal
 }: LoveOdysseyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMessage, setShowMessage] = useState(true);
@@ -828,15 +820,6 @@ const LoveOdyssey = ({
 
   return (
     <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center overflow-hidden z-[100] p-4 font-sans">
-      <Button 
-        onClick={onClose}
-        variant="ghost"
-        size="icon"
-        className="absolute top-6 right-6 z-50 text-white/50 hover:text-white hover:bg-white/10 rounded-full"
-      >
-        <X className="h-6 w-6" />
-        <span className="sr-only">Close</span>
-      </Button>
       <FloatingHearts count={250} />
       <div className="absolute inset-0 transition-all duration-1000 scale-125 blur-[100px] opacity-20 pointer-events-none">
         <img src={currentImage.src} className="w-full h-full object-cover" alt="" />
@@ -862,33 +845,28 @@ const LoveOdyssey = ({
                </span>
                <div className="mt-2 text-center">
                  <p className="text-rose-400 text-xl font-bold tracking-wider">Always & Forever</p>
-                 <p className="text-white/60 text-[9px] tracking-[0.3em] uppercase mt-1">A new chapter begins</p>
                </div>
             </div>
           </div>
         </div>
 
         {showMessage && (
-          <div className="p-4 sm:p-6 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md">
+          <div 
+            onClick={copyLinkToClipboard}
+            className="p-4 sm:p-6 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-3xl md:rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] text-center w-full max-w-[90%] md:max-w-md cursor-pointer group/heart"
+          >
             <p className="text-rose-100/70 text-sm md:text-base font-light leading-relaxed px-2">
               "{caption}"
             </p>
-            <div className="mt-4 flex justify-center">
+            <div className="mt-4 flex justify-center transition-transform duration-300 group-hover/heart:scale-110">
                <BeatingHeartCanvas />
             </div>
+             <p className="text-white/40 text-[10px] tracking-widest uppercase mt-4 opacity-0 group-hover/heart:opacity-100 transition-opacity duration-300">
+                Tap to Copy Link
+             </p>
           </div>
         )}
       </div>
-
-        <div className="absolute bottom-8 z-20 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-1000 fill-mode-forwards opacity-0">
-          <Button 
-            onClick={copyLinkToClipboard}
-            className="bg-white/10 text-white backdrop-blur-xl border border-white/10 hover:bg-white/20"
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Copy Shareable Link
-          </Button>
-        </div>
 
       <style>{`
         /* Heartbeat animation is now handled by the canvas component */
@@ -1622,7 +1600,7 @@ const LivingButton = ({
       <button
         onClick={isYes ? onClick : onCaught}
         className={cn(
-          "flex items-center gap-2 md:gap-4 px-6 py-3 md:px-8 md:py-4 rounded-full border-4 shadow-2xl cursor-pointer",
+          "flex items-center justify-center gap-2 md:gap-4 px-6 py-3 md:px-8 md:py-4 rounded-full border-4 shadow-2xl cursor-pointer",
           isYes ? "bg-rose-500 border-rose-300 text-white" : "bg-slate-100 border-slate-300 text-slate-800"
         )}
       >
@@ -1867,3 +1845,4 @@ const SnowfallCanvas = () => {
     
 
     
+
