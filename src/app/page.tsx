@@ -9,11 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import placeholderImagesData from '@/lib/placeholder-images.json';
-import { FirebaseClientProvider, useFirebase, useUser, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, setDoc, getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { v4 as uuidv4 } from 'uuid';
+import { FirebaseClientProvider, useFirebase, useDoc, useMemoFirebase, initiateAnonymousSignIn, addDocumentNonBlocking, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { doc, getFirestore, collection, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 const uploadImageToCloudinary = async (file: File): Promise<string> => {
@@ -1052,53 +1049,62 @@ const SetupPage = ({ onStart }: SetupPageProps) => {
         description: "Uploading images and saving your moment. Please wait.",
     });
 
+    let uploadedImages;
     try {
-      // Step 1: Upload images and get their URLs
-      const uploadedImages = await Promise.all(
-        formData.images.map(async (image) => {
-          let fileToUpload: File;
-          if (image.file) {
-              fileToUpload = image.file;
-          } else {
-              // This is a fallback if the file object isn't available for some reason.
-              // This can happen if the images were loaded from a previous session.
-              fileToUpload = await dataUrlToFile(image.src, `upload-${Date.now()}.jpg`);
-          }
+        uploadedImages = await Promise.all(
+            formData.images.map(async (image) => {
+                let fileToUpload: File;
+                if (image.file) {
+                    fileToUpload = image.file;
+                } else {
+                    fileToUpload = await dataUrlToFile(image.src, `upload-${Date.now()}.jpg`);
+                }
+                const imageUrl = await uploadImageToCloudinary(fileToUpload);
+                return {
+                    src: imageUrl,
+                    caption: image.caption,
+                };
+            })
+        );
+    } catch (error: any) {
+        console.error("Error during image upload:", error);
+        toast({
+            variant: "destructive",
+            title: "Image Upload Failed",
+            description: error.message || "Could not upload images. Please try again.",
+        });
+        setIsGenerating(false);
+        return;
+    }
 
-          const imageUrl = await uploadImageToCloudinary(fileToUpload);
-
-          return {
-            src: imageUrl,
-            caption: image.caption,
-          };
-        })
-      );
-
-      // Step 2: Create the proposal document in Firestore
-      const proposalData = {
+    const proposalData = {
         yourName: formData.yourName,
         partnerName: formData.partnerName,
         message: formData.message,
         theme: formData.theme,
         images: uploadedImages,
         createdAt: serverTimestamp(),
-      };
-      
-      const docRef = await addDoc(collection(firestore, "proposals"), proposalData);
+    };
 
-      // Step 3: Trigger the onStart callback with the new proposal ID
-      onStart(docRef.id);
-
-    } catch (e: any) {
-      console.error("Error generating proposal:", e);
-      toast({
-        variant: "destructive",
-        title: "Error Generating Link",
-        description: e.message || "There was a problem creating your proposal. Please try again.",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    const proposalsCol = collection(firestore, "proposals");
+    addDocumentNonBlocking(proposalsCol, proposalData)
+        .then((docRef) => {
+            if (docRef) {
+                onStart(docRef.id);
+            }
+        })
+        .catch((error) => {
+            // The error is emitted by the helper, this is for UI feedback
+            console.error("Failed to add document:", error);
+            toast({
+                variant: "destructive",
+                title: "Failed to Save Proposal",
+                description: "There was a permission issue. Please try again.",
+            });
+        })
+        .finally(() => {
+            setIsGenerating(false);
+        });
   };
   
   return (

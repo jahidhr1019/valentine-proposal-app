@@ -110,18 +110,14 @@
   "firestore": {
     "structure": [
       {
-        "path": "/users/{userId}/proposals/{proposalId}",
+        "path": "/proposals/{proposalId}",
         "definition": {
           "entityName": "Proposal",
           "schema": {
             "$ref": "#/backend/entities/Proposal"
           },
-          "description": "Stores proposal data specific to a user. Path-based ownership ensures only the user can access these documents.",
+          "description": "Stores public proposal data. This collection is readable by anyone with the link.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the user who created the proposal."
-            },
             {
               "name": "proposalId",
               "description": "The unique ID of the proposal."
@@ -130,18 +126,14 @@
         }
       },
       {
-        "path": "/users/{userId}/proposals/{proposalId}/photos/{photoId}",
+        "path": "/proposals/{proposalId}/photos/{photoId}",
         "definition": {
           "entityName": "Photo",
           "schema": {
             "$ref": "#/backend/entities/Photo"
           },
-          "description": "Stores photos associated with a specific proposal for a user. Path-based ownership ensures only the user can access these documents.",
+          "description": "Stores photos associated with a public proposal.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the user who owns the proposal and photos."
-            },
             {
               "name": "proposalId",
               "description": "The ID of the proposal to which the photo belongs."
@@ -170,6 +162,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage proposal personalization, photo memories, and decision history for the Eternal Echo app. It prioritizes authorization independence by using path-based ownership for user-specific data, eliminating the need for `get()` calls in security rules. Specifically, all proposal data and associated photos will reside under a user-specific path. This approach allows for atomic operations (transactions/batches) when creating or updating proposal documents and their related photo subcollections. QAPs (Rules are not Filters) are supported because list operations can be secured by scoping the queries to the user's path. Data segregation ensures that all data within a user's path shares the same access control requirements. The DecisionHistory is located outside the proposal to allow more general machine learning."
+    "reasoning": "The Firestore structure is designed for a publicly shareable proposal experience. The '/proposals' collection is world-readable to allow anyone with a link to view the proposal. Writes are restricted to authenticated users (including anonymous ones who are signed in automatically) to prevent unauthorized creation. This public data model is simpler and more appropriate for shareable content than a strict user-owned data model. The DecisionHistory collection remains a write-only drop-box for analytics."
   }
 }

@@ -1,66 +1,37 @@
 /**
- * This ruleset enforces a strict user-ownership model for the Eternal Echo application.
- * All user-specific data, including proposals and their associated photos, is nested
- * under a user-specific path `/users/{userId}`. This path-based security model ensures
- * that users can only access their own data, providing strong authorization guarantees
- * without the need for costly cross-document lookups.
+ * This ruleset is designed for the Eternal Echo application, which requires
+ * proposals to be publicly shareable via a link.
  *
  * Core Philosophy:
- * Data is either private to a single user or write-only for analytics. There is no
- * concept of shared or public user-generated content in this model.
+ * Proposal data is public and read-only for viewers. Creation is restricted
+ * to authenticated sessions (including anonymous users), and modifications
+ * from the client are disallowed to preserve the integrity of the proposal.
  *
  * Data Structure:
- * - /users/{userId}/proposals/{proposalId}: Contains the user's proposal details.
- * - /users/{userId}/proposals/{proposalId}/photos/{photoId}: Stores photos for a given proposal.
+ * - /proposals/{proposalId}: Contains public proposal details and image URLs.
+ * - /proposals/{proposalId}/photos/{photoId}: Stores photos for a given proposal.
  * - /decision_history/{decisionHistoryId}: A write-only collection for logging user
  *   interactions for machine learning, accessible even to anonymous users.
  *
  * Key Security Decisions:
- * - Strict Ownership: All CRUD operations within the `/users/{userId}` path are restricted
- *   to the authenticated user whose UID matches `{userId}`.
- * - No User Enumeration: Listing the top-level `/users` collection is explicitly disallowed
- *   to protect user privacy.
- * - Write-Only Analytics: The `/decision_history` collection is configured as a secure
- *   "drop box." Any user (including anonymous ones) can create documents, but no one
- *   can read, update, or delete them via the client SDKs. This is ideal for collecting
- *   training data without exposing it.
- * - Relational Integrity: On document creation, rules validate that IDs within the
- *   document data match the IDs in the document path, ensuring data consistency. These
- *   IDs are immutable on update.
- *
- * Denormalization for Authorization:
- * This ruleset leverages a path-based security structure (`/users/{userId}/...`) as its
- * primary authorization mechanism. This is a form of denormalization where the ownership
- * information (`userId`) is encoded in the document's path. This allows for simple,
- * fast, and highly secure rules like `isOwner(userId)` without needing `get()` calls to
- * check ownership on related documents.
+ * - Public Readability: Any user with a link can read documents in the `/proposals`
+ *   collection and its subcollections. This is essential for the sharing feature.
+ * - Authenticated Create: Only authenticated sessions can create new proposals. The app
+ *   handles this by signing users in anonymously.
+ * - Immutability: Update and delete operations on proposals and photos are disallowed
+ *   from the client to prevent tampering.
+ * - Write-Only Analytics: The `/decision_history` collection is a secure "drop box."
+ *   Any user can create documents, but no one can read, update, or delete them.
+ * - List Prevention: Listing the entire `/proposals` collection is disallowed to prevent
+ *   enumeration of all proposals created in the app.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // Helper functions for reusable logic
-    /**
-     * Verifies if a user is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
-    }
-
-    /**
-     * Verifies if the requesting user's UID matches the specified userId.
-     * This is the primary function for enforcing document ownership.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-    
-    /**
-    * Verifies ownership for an existing document. Used for update and delete
-    * operations to ensure the target document exists before modification.
-    */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
     }
 
     /**
@@ -70,14 +41,6 @@ service cloud.firestore {
     function isProposalDataValidForCreate(proposalId) {
       let data = request.resource.data;
       return data.id == proposalId;
-    }
-
-    /**
-     * On update, ensures the proposal's `id` field remains unchanged.
-     */
-    function isProposalDataValidForUpdate() {
-      let data = request.resource.data;
-      return data.id == resource.data.id;
     }
     
     /**
@@ -90,61 +53,35 @@ service cloud.firestore {
     }
 
     /**
-     * On update, ensures the photo's `id` and `proposalId` fields remain unchanged.
+     * @description Secures public proposal documents.
+     * @path        /proposals/{proposalId}
+     * @allow       Anyone can (get) a proposal if they have the direct link (ID).
+     * @allow       An authenticated user (incl. anonymous) can (create) a new proposal.
+     * @deny        No one can (list) all proposals, preventing enumeration.
+     * @deny        No one can (update) or (delete) a proposal from the client.
+     * @principle   Enables the core sharing feature while protecting data integrity.
      */
-    function isPhotoDataValidForUpdate() {
-      let data = request.resource.data;
-      return data.id == resource.data.id && data.proposalId == resource.data.proposalId;
-    }
-
-    /**
-     * @description Rules for the user-specific data tree. This path itself does not
-     *              represent a document but serves as a parent for all user-owned collections.
-     * @path        /users/{userId}
-     * @allow       A user (uid: 'user_abc') can (get, list, create, update, delete) documents in subcollections like `proposals`.
-     * @deny        An anonymous user or a different user (uid: 'user_xyz') attempting to access anything under `/users/user_abc`.
-     * @deny        Any user attempting to `list` the top-level `/users` collection.
-     * @principle   Establishes a secure root path for all user-owned data.
-     */
-    match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if false;
+    match /proposals/{proposalId} {
+      allow get: if true;
+      allow list: if false; // Prevent enumeration of all proposals
+      allow create: if isSignedIn();
       allow update: if false;
       allow delete: if false;
 
       /**
-       * @description Secures proposal documents, ensuring only the owner can manage them.
-       * @path        /users/{userId}/proposals/{proposalId}
-       * @allow       A user (uid: 'user_abc') can (create) a new proposal at `/users/user_abc/proposals/prop_123`.
-       * @allow       The same user can (get), (list), (update), or (delete) their own proposals.
-       * @deny        A different user (uid: 'user_xyz') attempting to (get) `/users/user_abc/proposals/prop_123`.
-       * @deny        A user trying to (create) a proposal where the `id` in the data does not match `{proposalId}`.
-       * @principle   Enforces document ownership for all operations and validates relational integrity on writes.
+       * @description Secures photo subcollections, making them publicly readable.
+       * @path        /proposals/{proposalId}/photos/{photoId}
+       * @allow       Anyone can (get) or (list) photos for a public proposal.
+       * @deny        Client-side creation, update, and deletion of photos are disallowed.
+       *              Photos should be created atomically with the proposal document.
+       * @principle   Inherits public readability from the parent proposal.
        */
-      match /proposals/{proposalId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && isProposalDataValidForCreate(proposalId);
-        allow update: if isExistingOwner(userId) && isProposalDataValidForUpdate();
-        allow delete: if isExistingOwner(userId);
-
-        /**
-         * @description Secures photo subcollections, inheriting ownership from the parent proposal and user.
-         * @path        /users/{userId}/proposals/{proposalId}/photos/{photoId}
-         * @allow       A user (uid: 'user_abc') can (create) a new photo in their own proposal subcollection.
-         * @allow       The same user can (get), (list), (update), or (delete) their own photos.
-         * @deny        A different user (uid: 'user_xyz') attempting to (list) photos under `/users/user_abc/...`.
-         * @deny        A user trying to (create) a photo where the `proposalId` in the data does not match the `{proposalId}` in the path.
-         * @principle   Enforces inherited ownership from the path and validates relational integrity.
-         */
-        match /photos/{photoId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId) && isPhotoDataValidForCreate(proposalId, photoId);
-          allow update: if isExistingOwner(userId) && isPhotoDataValidForUpdate();
-          allow delete: if isExistingOwner(userId);
-        }
+      match /photos/{photoId} {
+        allow get: if true;
+        allow list: if true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
       }
     }
     
@@ -154,7 +91,7 @@ service cloud.firestore {
      * @path        /decision_history/{decisionHistoryId}
      * @allow       Any user, including anonymous ones, can (create) a new decision record.
      * @deny        Any user attempting to (get), (list), (update), or (delete) any record.
-     * @principle   Allows for public data submission while preventing data leakage by disallowing all read and modification operations from the client.
+     * @principle   Allows for public data submission while preventing data leakage.
      */
     match /decision_history/{decisionHistoryId} {
       allow get: if false;
