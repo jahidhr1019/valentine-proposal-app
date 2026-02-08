@@ -1751,14 +1751,8 @@ const ConstellationCanvas = () => {
     const connectionDist = 150;
     let animationFrameId: number;
     
-    const handleResize = () => {
-      if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      init();
-    };
-    
     const init = () => {
+      if (!canvas) return;
       stars = Array.from({ length: starCount }).map(() => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -1766,6 +1760,13 @@ const ConstellationCanvas = () => {
         vy: (Math.random() - 0.5) * 0.5,
         radius: Math.random() * 1.5 + 1
       }));
+    };
+
+    const handleResize = () => {
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      init();
     };
     
     handleResize();
