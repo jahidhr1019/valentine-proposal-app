@@ -1491,6 +1491,7 @@ const LivingButton = ({
     if (mode === 'tornado') return 'astonished';
     if (rejectionCount && rejectionCount > 3) return 'exhausted';
     if (isFleeing) return 'astonished';
+    if (rejectionCount >= 1) return 'taunting';
     return 'neutral';
   }, [isHeartbroken, isFinalState, isYes, dynamicOffset, mode, rejectionCount, isFleeing]);
 
@@ -1612,6 +1613,8 @@ const LivingButton = ({
       grimacing: 'Ugh!',
       astonished: 'Whoa!',
       exhausted: 'So... tired...',
+      taunting: 'Vagoo!',
+      neutral: 'Not a chance.'
   };
   const note = isYes ? '' : moodNotes[mood] || '';
 
@@ -1648,7 +1651,7 @@ const LivingButton = ({
           "absolute -top-14 text-center transition-opacity duration-300 whitespace-nowrap",
           note ? 'opacity-100' : 'opacity-0'
         )}>
-          <div className="rounded-md border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-mono text-white/70 shadow-lg backdrop-blur-sm">
+          <div className="rounded-md border border-white/10 bg-black/40 px-3 py-1.5 text-sm font-bold font-mono text-white/80 shadow-lg backdrop-blur-sm">
             {note}
           </div>
         </div>
@@ -1916,3 +1919,4 @@ const SnowfallCanvas = () => {
     
 
     
+
