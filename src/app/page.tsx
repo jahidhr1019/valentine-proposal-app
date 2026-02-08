@@ -393,7 +393,7 @@ const HeartbreakScene = () => {
         <div className="p-1 bg-gradient-to-br from-rose-500 via-red-500 to-rose-700 rounded-2xl shadow-[0_0_40px_rgba(225,29,72,0.6)]">
           <div className="bg-slate-900 p-1 rounded-[14px]">
             <Image
-              src="https://media1.tenor.com/m/b4614A10C-kAAAAC/gun-cat.gif"
+              src="/images/cat-gun.gif"
               alt="Sad cat with a gun"
               width={256}
               height={256}
