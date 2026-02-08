@@ -389,12 +389,14 @@ const HeartbreakScene = () => {
     <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden">
       <FallingBrokenHearts count={100} />
       <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in-0 zoom-in-90 duration-1000">
-        <div className="p-2 bg-black/50 border-2 border-rose-500/50 rounded-2xl shadow-[0_0_30px_rgba(225,29,72,0.5)]">
-          <img 
-            src="/images/cat-gun.gif" 
-            alt="Sad cat with a gun" 
-            className="rounded-lg w-64 h-64 object-cover" 
-          />
+        <div className="p-1 bg-gradient-to-br from-rose-500 via-red-500 to-rose-700 rounded-2xl shadow-[0_0_40px_rgba(225,29,72,0.6)]">
+          <div className="bg-slate-900 p-1 rounded-[14px]">
+            <img 
+              src="/images/cat-gun.gif" 
+              alt="Sad cat with a gun" 
+              className="rounded-lg w-64 h-64 object-cover" 
+            />
+          </div>
         </div>
         <h2 className="text-3xl font-retro text-red-500 text-center drop-shadow-[0_0_10px_rgba(255,0,0,0.7)]">
           Stop messing with my heart
@@ -1748,7 +1750,14 @@ const ConstellationCanvas = () => {
     const starCount = 60;
     const connectionDist = 150;
     let animationFrameId: number;
-
+    
+    const handleResize = () => {
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      init();
+    };
+    
     const init = () => {
       stars = Array.from({ length: starCount }).map(() => ({
         x: Math.random() * canvas.width,
@@ -1757,13 +1766,6 @@ const ConstellationCanvas = () => {
         vy: (Math.random() - 0.5) * 0.5,
         radius: Math.random() * 1.5 + 1
       }));
-    };
-    
-    const handleResize = () => {
-      if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      init();
     };
     
     handleResize();
