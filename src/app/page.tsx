@@ -392,12 +392,13 @@ const HeartbreakScene = () => {
       <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in-0 zoom-in-90 duration-1000">
         <div className="p-1 bg-gradient-to-br from-rose-500 via-red-500 to-rose-700 rounded-2xl shadow-[0_0_40px_rgba(225,29,72,0.6)]">
           <div className="bg-slate-900 p-1 rounded-[14px]">
-            <Image 
-              src="/images/cat-gun.gif" 
+            <Image
+              src="https://media1.tenor.com/m/b4614A10C-kAAAAC/gun-cat.gif"
               alt="Sad cat with a gun"
               width={256}
               height={256}
-              className="rounded-lg object-cover" 
+              unoptimized
+              className="rounded-lg object-cover"
             />
           </div>
         </div>
@@ -431,21 +432,21 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
     const handleNoClicked = () => {
         if (isHeartbroken || showHeartbreakScene) return;
 
-        if (rejectionCount === 1) { // On the second "No" click
+        if (rejectionCount >= 1) { // On the second "No" click and onwards
             setShowHeartbreakScene(true);
-            setYesButtonScale(prev => prev + 0.4);
-            setNoButtonScale(prev => Math.max(0.3, prev * 0.9));
             setTimeout(() => {
                 setShowHeartbreakScene(false);
                 setRejectionCount(prev => prev + 1);
+                setYesButtonScale(prev => prev + 0.4);
+                setNoButtonScale(prev => Math.max(0.3, prev * 0.9));
             }, 4000); // Show scene for 4 seconds
         } else {
             setIsHeartbroken(true);
+            setRejectionCount(prev => prev + 1);
             setYesButtonScale(prev => prev + 0.4);
             setNoButtonScale(prev => Math.max(0.3, prev * 0.9));
             setTimeout(() => {
                 setIsHeartbroken(false);
-                setRejectionCount(prev => prev + 1);
             }, 2500);
         }
     };
@@ -478,7 +479,7 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
     }
 
     if (showSuccess) {
-      return <LoveOdyssey proposal={proposal} />;
+      return <LoveOdyssey proposal={{...proposal, id: proposalId}} />;
     }
   
     if(showCelebration) {
@@ -493,15 +494,16 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
   const partner = proposal.partnerName || currentThemeConfig.partnerName;
 
   const BackgroundCanvas = () => {
-    switch (proposal.theme) {
+    const theme = proposal.theme;
+    switch (theme) {
       case 'winter-whisper':
         return <SnowfallCanvas />;
       case 'romantic':
-      case 'agent': // Enchanted might fit here too
+      case 'agent': 
         return <SakuraCanvas />;
       case 'cyber':
       case 'galactic':
-        return <ConstellationCanvas />;
+      case 'retro':
       default:
         return <ConstellationCanvas />;
     }
@@ -1766,12 +1768,12 @@ const ConstellationCanvas = () => {
         radius: Math.random() * 1.5 + 1
       }));
     };
-
+    
     const handleResize = () => {
       if (!canvas) return;
       init();
     };
-    
+
     handleResize();
     window.addEventListener('resize', handleResize);
 
@@ -1907,5 +1909,7 @@ const SnowfallCanvas = () => {
 
 
 
+
+    
 
     
