@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, MouseEvent, useCallback, Suspense } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Heart, Copy, UploadCloud, X, Link as LinkIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -391,10 +392,12 @@ const HeartbreakScene = () => {
       <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in-0 zoom-in-90 duration-1000">
         <div className="p-1 bg-gradient-to-br from-rose-500 via-red-500 to-rose-700 rounded-2xl shadow-[0_0_40px_rgba(225,29,72,0.6)]">
           <div className="bg-slate-900 p-1 rounded-[14px]">
-            <img 
+            <Image 
               src="/images/cat-gun.gif" 
-              alt="Sad cat with a gun" 
-              className="rounded-lg w-64 h-64 object-cover" 
+              alt="Sad cat with a gun"
+              width={256}
+              height={256}
+              className="rounded-lg object-cover" 
             />
           </div>
         </div>
@@ -1753,6 +1756,8 @@ const ConstellationCanvas = () => {
     
     const init = () => {
       if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
       stars = Array.from({ length: starCount }).map(() => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -1764,8 +1769,6 @@ const ConstellationCanvas = () => {
 
     const handleResize = () => {
       if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
       init();
     };
     
