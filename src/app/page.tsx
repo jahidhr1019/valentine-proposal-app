@@ -384,6 +384,26 @@ function Home() {
   return <ProposalPlayer proposalId={currentProposalId} />;
 }
 
+const HeartbreakScene = () => {
+  return (
+    <div className="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center overflow-hidden">
+      <FallingBrokenHearts count={100} />
+      <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in-0 zoom-in-90 duration-1000">
+        <div className="p-2 bg-black/50 border-2 border-rose-500/50 rounded-2xl shadow-[0_0_30px_rgba(225,29,72,0.5)]">
+          <img 
+            src="/images/cat-gun.gif" 
+            alt="Sad cat with a gun" 
+            className="rounded-lg w-64 h-64 object-cover" 
+          />
+        </div>
+        <h2 className="text-3xl font-retro text-red-500 text-center drop-shadow-[0_0_10px_rgba(255,0,0,0.7)]">
+          Stop messing with my heart
+        </h2>
+      </div>
+    </div>
+  );
+};
+
 const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
     const { firestore } = useFirebase();
 
@@ -401,16 +421,28 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
     const [yesButtonScale, setYesButtonScale] = useState(1);
     const [noButtonScale, setNoButtonScale] = useState(1);
     const [isHeartbroken, setIsHeartbroken] = useState(false);
+    const [showHeartbreakScene, setShowHeartbreakScene] = useState(false);
 
     const handleNoClicked = () => {
-        if (isHeartbroken) return;
-        setIsHeartbroken(true);
-        setYesButtonScale(prev => prev + 0.4);
-        setNoButtonScale(prev => Math.max(0.3, prev * 0.9));
-        setTimeout(() => {
-            setIsHeartbroken(false);
-            setRejectionCount(prev => prev + 1);
-        }, 2500);
+        if (isHeartbroken || showHeartbreakScene) return;
+
+        if (rejectionCount === 1) { // On the second "No" click
+            setShowHeartbreakScene(true);
+            setYesButtonScale(prev => prev + 0.4);
+            setNoButtonScale(prev => Math.max(0.3, prev * 0.9));
+            setTimeout(() => {
+                setShowHeartbreakScene(false);
+                setRejectionCount(prev => prev + 1);
+            }, 4000); // Show scene for 4 seconds
+        } else {
+            setIsHeartbroken(true);
+            setYesButtonScale(prev => prev + 0.4);
+            setNoButtonScale(prev => Math.max(0.3, prev * 0.9));
+            setTimeout(() => {
+                setIsHeartbroken(false);
+                setRejectionCount(prev => prev + 1);
+            }, 2500);
+        }
     };
 
     const handleYesClicked = (e?: MouseEvent) => {
@@ -436,6 +468,10 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
         );
     }
     
+    if (showHeartbreakScene) {
+      return <HeartbreakScene />;
+    }
+
     if (showSuccess) {
       return <LoveOdyssey proposal={proposal} />;
     }
@@ -475,8 +511,7 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
         {isHeartbroken ? <FallingBrokenHearts count={50} /> : <FloatingHearts count={250} />}
       </div>
 
-      <div className="absolute inset-0 z-40">
-        <div className="relative w-full h-full flex flex-col items-center justify-center gap-16 md:gap-24 p-4">
+      <div className="relative w-full h-full flex flex-col items-center justify-center gap-16 md:gap-24 p-4 z-10">
           
           <div className={`text-center pointer-events-none transition-all duration-1000 ${isFinalState ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100'}`}>
             <h1 className={cn(
@@ -516,7 +551,6 @@ const ProposalPlayer = ({ proposalId }: { proposalId: string }) => {
           </div>
 
         </div>
-      </div>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&family=Special+Elite&display=swap');
@@ -1726,16 +1760,17 @@ const ConstellationCanvas = () => {
     };
     
     const handleResize = () => {
+      if (!canvas) return;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       init();
     };
     
-    init();
+    handleResize();
     window.addEventListener('resize', handleResize);
 
     const animate = () => {
-      if(!ctx) return;
+      if(!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       stars.forEach((s, i) => {
