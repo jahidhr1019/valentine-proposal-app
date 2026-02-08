@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import placeholderImagesData from '@/lib/placeholder-images.json';
-import { FirebaseClientProvider, useFirebase, useMemoFirebase, initiateAnonymousSignIn, addDocumentNonBlocking, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { FirebaseClientProvider, useFirebase, useMemoFirebase, useDoc, initiateAnonymousSignIn, addDocumentNonBlocking, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { doc, getFirestore, collection, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
