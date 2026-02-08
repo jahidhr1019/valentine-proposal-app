@@ -398,7 +398,7 @@ const HeartbreakScene = () => {
               width={256}
               height={256}
               unoptimized
-              className="rounded-lg object-cover"
+              className="rounded-lg"
             />
           </div>
         </div>
@@ -1774,7 +1774,7 @@ const ConstellationCanvas = () => {
       init();
     };
 
-    handleResize();
+    init();
     window.addEventListener('resize', handleResize);
 
     const animate = () => {
