@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import placeholderImagesData from '@/lib/placeholder-images.json';
-import { FirebaseClientProvider, useFirebase, useDoc, useMemoFirebase, initiateAnonymousSignIn, addDocumentNonBlocking, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { FirebaseClientProvider, useFirebase, useMemoFirebase, initiateAnonymousSignIn, addDocumentNonBlocking, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { doc, getFirestore, collection, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
@@ -393,11 +393,10 @@ const HeartbreakScene = () => {
         <div className="p-1 bg-gradient-to-br from-rose-500 via-red-500 to-rose-700 rounded-2xl shadow-[0_0_40px_rgba(225,29,72,0.6)]">
           <div className="bg-slate-900 p-1 rounded-[14px]">
             <Image
-              src="https://media1.tenor.com/m/b4614A10C-kAAAAC/gun-cat.gif"
+              src="/images/cat-gun-0007.jpg"
               alt="Sad cat with a gun"
               width={256}
               height={256}
-              unoptimized
               className="rounded-lg"
             />
           </div>
@@ -1911,6 +1910,8 @@ const SnowfallCanvas = () => {
 
 
 
+
+    
 
     
 

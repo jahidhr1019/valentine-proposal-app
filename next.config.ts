@@ -15,12 +15,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
       },
-      {
-        protocol: 'https',
-        hostname: 'media1.tenor.com',
-      }
     ],
   },
 };
 
 export default nextConfig;
+
+    
